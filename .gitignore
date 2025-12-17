@@ -1,1 +1,21 @@
-/target
+# --- RUST ---
+/malware_agent/target/
+/malware_agent/Cargo.lock
+**/*.rs.bk
+
+# --- PYTHON ---
+/c2_server/__pycache__/
+/c2_server/*.py[cod]
+/c2_server/venv/
+/c2_server/.env
+/c2_server/.venv
+
+.DS_Store
+Thumbs.db
+
+# --- Demo Artefakte ---
+# Ignoriere Schlüssel und verschlüsselte Dateien
+# versehentlich verschlüsselte Testdaten nicht auf GitHub hochlädst.
+*.key
+*.locked
+*.enc_temp
