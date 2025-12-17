@@ -1,10 +1,8 @@
-# [Name deiner Software] - Malware Behavior Demo (Rust)
+# rust-mw - Malware Demo (Rust)
 
-> **⚠️ WICHTIGER HINWEIS / IMPORTANT NOTICE**
+> **WICHTIGER HINWEIS / IMPORTANT NOTICE**
 >
-> **DEUTSCH:** Diese Software wurde ausschließlich zu **Bildungs- und Forschungszwecken** entwickelt. Sie dient dazu, das Verhalten von Schadsoftware zu analysieren, um Verteidigungsmechanismen zu verbessern. Der Autor übernimmt keinerlei Haftung für Missbrauch oder Schäden, die durch diese Software entstehen.
->
-> **ENGLISH:** This software was developed exclusively for **educational and research purposes**. It serves to analyze the behavior of malware in order to improve defense mechanisms. The author accepts no liability for misuse or damage caused by this software.
+> Diese Software wurde ausschließlich zu **Bildungs- und Forschungszwecken** entwickelt. Sie dient dazu, das Verhalten von Schadsoftware zu analysieren, um Verteidigungsmechanismen zu verbessern. Der Autor übernimmt keinerlei Haftung für Missbrauch oder Schäden, die durch diese Software entstehen.
 
 ---
 
