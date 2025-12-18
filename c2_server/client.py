@@ -16,8 +16,6 @@ Um die Client-Prozesse zu stoppen:
 """
 
 
-
-
 def deamonize():
     """Client im Hintergrund ausführen, indem der Prozess geforkt wird"""
     try:
