@@ -1,0 +1,169 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #1a1a1a;
+    color: white;
+    margin: 0;
+    overflow: hidden;
+    /* Prevent scrolling to keep focus on modal */
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+    background-color: #fff;
+    color: #333;
+    padding: 30px;
+    border: 5px solid #ff0000;
+    box-shadow: 0 0 50px rgba(255, 0, 0, 0.8);
+    text-align: center;
+    max-width: 600px;
+    width: 90%;
+    animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+h1 {
+    color: #ff0000;
+    font-size: 2em;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.blink {
+    animation: blinker 1s linear infinite;
+    color: red;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
+
+@keyframes shake {
+
+    10%,
+    90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+
+    20%,
+    80% {
+        transform: translate3d(2px, 0, 0);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+
+    40%,
+    60% {
+        transform: translate3d(4px, 0, 0);
+    }
+}
+
+.scan-box {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.progress-bar {
+    background-color: #ddd;
+    height: 20px;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    background-color: #28a745;
+    /* Green looks "official" for progress */
+    height: 100%;
+    width: 0%;
+    animation: progress 3s ease-out forwards;
+}
+
+@keyframes progress {
+    to {
+        width: 85%;
+        background-color: #dc3545;
+    }
+
+    /* Turns red at the end */
+}
+
+.virus-list {
+    list-style: none;
+    padding: 0;
+}
+
+.virus-list li {
+    margin: 5px 0;
+    font-family: monospace;
+}
+
+.infected {
+    color: red;
+    font-weight: bold;
+}
+
+.at-risk {
+    color: orange;
+    font-weight: bold;
+}
+
+.action-text {
+    font-size: 1.1em;
+    margin-bottom: 20px;
+}
+
+.download-btn {
+    display: inline-block;
+    background-color: #007bff;
+    /* Windows blue */
+    color: white;
+    padding: 15px 30px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.2em;
+    border-radius: 5px;
+    border: 2px solid #0056b3;
+    transition: background-color 0.2s;
+}
+
+.download-btn:hover {
+    background-color: #0056b3;
+}
+
+.timer {
+    margin-top: 20px;
+    color: #cc0000;
+    font-weight: bold;
+}
+
+.disclaimer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #333;
+    color: #aaa;
+    text-align: center;
+    padding: 10px;
+    font-size: 0.8em;
+    z-index: 2000;
+}

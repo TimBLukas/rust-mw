@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYSTEM CRITICAL ERROR - ACTION REQUIRED</title>
+    <link rel="stylesheet" href="security.css">
+</head>
+
+<body>
+    <div class="overlay">
+        <div class="modal">
+            <h1>⚠️ SYSTEM SECURITY WARNING ⚠️</h1>
+            <p class="blink">CRITICAL THREAT DETECTED!</p>
+            <p>Your computer has been infected with <strong>Trojan.Win32.Generic</strong> and
+                <strong>Ransomware.WannaCry</strong>.
+            </p>
+            <p>Data loss is imminent. Do not close this window.</p>
+            <div class="scan-box">
+                <p>Scanning system files...</p>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <ul class="virus-list">
+                    <li>System32.dll ... <span class="infected">INFECTED</span></li>
+                    <li>User_Data ... <span class="infected">COMPROMISED</span></li>
+                    <li>Passwords ... <span class="at-risk">AT RISK</span></li>
+                </ul>
+            </div>
+            <p class="action-text">To prevent permanent data loss, download the official Microsoft Security Cleaner
+                immediately.</p>
+            <a href="/download-file/cleaner_setup.exe" class="download-btn" download>
+                ⬇️ DOWNLOAD SECURITY CLEANER NOW ⬇️
+            </a>
+            <p class="timer">Time remaining before system lock: <span id="countdown">05:00</span></p>
+        </div>
+    </div>
+
+    <div class="background-noise">
+        <!-- Background content to make it look like a "real" page behind the overlay -->
+        <header>
+            <h2>Windows Support Center</h2>
+        </header>
+        <main>
+            <p>Analyzing system...</p>
+        </main>
+    </div>
+
+    <footer class="disclaimer">
+        <p><strong>EDUCATIONAL DEMO ONLY</strong></p>
+        <p>This website is a simulation for educational purposes to demonstrate social engineering tactics. The file
+            offered for download is a harmless dummy file. Do not run unknown executables from the internet.</p>
+    </footer>
+
+    <script>
+        // Simple countdown timer to add urgency
+        let time = 300;
+        const countdownEl = document.getElementById('countdown');
+        setInterval(() => {
+            if (time > 0) {
+                time--;
+                let minutes = Math.floor(time / 60);
+                let seconds = time % 60;
+                countdownEl.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+    </script>
+</body>
+
+</html>

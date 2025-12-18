@@ -10,6 +10,11 @@
 /c2_server/.env
 /c2_server/.venv
 
+
+# -- NOde
+DbD-Site/package-lock.json
+DbD-Site/node_modules
+
 .DS_Store
 Thumbs.db
 

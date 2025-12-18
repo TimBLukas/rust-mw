@@ -1,0 +1,114 @@
+body {
+    background-color: #f0f0f0;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    overflow-x: hidden;
+    background: repeating-linear-gradient(45deg,
+            #606dbc,
+            #606dbc 10px,
+            #465298 10px,
+            #465298 20px);
+}
+
+.main-card {
+    background: white;
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 10;
+}
+
+h1 {
+    color: #ff0000;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.bounce {
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.visitor-info {
+    font-size: 1.2em;
+    color: #333;
+}
+
+.highlight {
+    background: yellow;
+    font-weight: bold;
+    padding: 0 5px;
+    border: 1px dashed red;
+}
+
+.prize-box {
+    background: #fff8e1;
+    border: 2px solid #ffc107;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 10px;
+}
+
+.prize-image {
+    font-size: 2em;
+    font-weight: bold;
+    color: #28a745;
+    margin: 10px 0;
+}
+
+.urgent {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.claim-btn {
+    display: block;
+    width: 80%;
+    margin: 20px auto;
+    background: linear-gradient(to bottom, #ffeb3b, #fbc02d);
+    color: #d32f2f;
+    font-size: 1.5em;
+    font-weight: bold;
+    text-decoration: none;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #f57f17;
+    box-shadow: 0 5px 0 #f57f17;
+    transition: transform 0.1s;
+}
+
+.claim-btn:hover {
+    transform: translateY(2px);
+    box-shadow: 0 3px 0 #f57f17;
+}
+
+.testimonials {
+    margin-top: 30px;
+    font-size: 0.9em;
+    color: #666;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.disclaimer {
+    margin-top: 50px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 0.8em;
+}
