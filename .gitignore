@@ -24,3 +24,13 @@ Thumbs.db
 *.key
 *.locked
 *.enc_temp
+
+
+# -- Latex erzeugte Dokumente
+presentation/presentation.aux
+presentation/presentation.log
+presentation/presentation.nav
+presentation/presentation.out
+presentation/presentation.snm
+presentation/presentation.toc
+presentation/presentation.vrb

