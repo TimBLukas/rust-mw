@@ -21,7 +21,7 @@ Ziel ist es die Funktionsweise von Ransomware zu erklären und zu demonstrieren
 
 ---
 
-## 🏗️ Architektur
+## Architektur
 
 ### 1. Netzwerk-Kommunikation (Reverse Shell)
 
@@ -52,7 +52,7 @@ graph LR
 2. Verschlüsselungsprozess (Atomic Encryption)
    Um Datenverlust bei Abstürzen zu verhindern, nutzt der Agent ein atomares Verfahren.
 
-```Mermaid
+```mermaid
 sequenceDiagram
     participant FS as Dateisystem
     participant Agent as Rust Agent
