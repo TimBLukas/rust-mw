@@ -4,17 +4,17 @@
 \usetheme[progressbar=frametitle, block=fill]{metropolis}
 
 % --- Farben (Modernes Security-Blau Schema) ---
-% Tiefes Blau für Seriosität, leuchtendes Cyan für den "Cyber"-Look
-\definecolor{SecBlue}{RGB}{10, 30, 60}       % Sehr dunkles Blau (Hintergrund/Struktur)
+\definecolor{SecBlue}{RGB}{10, 30, 60}       % Sehr dunkles Blau (Background/Text)
 \definecolor{TechBlue}{RGB}{0, 85, 150}      % Mittleres Blau (Elemente)
-\definecolor{CyberCyan}{RGB}{0, 180, 216}    % Helles Cyan (Highlights/Akzente)
+\definecolor{CyberCyan}{RGB}{0, 180, 216}    % Helles Cyan (Highlights)
 \definecolor{LightGrey}{RGB}{248, 249, 250}  % Fast Weiß
+\definecolor{AlertRed}{RGB}{200, 40, 40}     % Für Bedrohungen
 
 % Farb-Anpassungen des Themes
 \setbeamercolor{frametitle}{bg=white, fg=TechBlue}
 \setbeamercolor{title separator}{fg=CyberCyan}
 \setbeamercolor{progress bar}{fg=CyberCyan, bg=LightGrey}
-\setbeamercolor{alerted text}{fg=CyberCyan}
+\setbeamercolor{alerted text}{fg=AlertRed}
 \setbeamercolor{normal text}{fg=SecBlue}
 \setbeamercolor{block title}{bg=TechBlue, fg=white}
 \setbeamercolor{block body}{bg=LightGrey, fg=SecBlue}
@@ -25,10 +25,12 @@
 \usepackage{helvet} 
 \usepackage{listings}
 \usepackage{tikz}
-\usetikzlibrary{shapes, arrows, positioning, shadows, calc, fit}
+\usetikzlibrary{shapes, arrows, positioning, shadows, calc, fit, shapes.geometric, patterns, matrix}
+\usetikzlibrary{shapes, shapes.symbols, arrows, positioning, shadows, calc, fit, patterns, matrix}
 \usepackage{booktabs}
+\usepackage{pifont} % Für Checkmarks
 
-% --- Code Listing Style (VS Code Dark Theme inspiriert) ---
+% --- Code Listing Style ---
 \lstset{
     basicstyle=\ttfamily\scriptsize\color{SecBlue},
     keywordstyle=\color{TechBlue}\bfseries,
@@ -36,7 +38,7 @@
     stringstyle=\color{teal},
     numberstyle=\tiny\color{gray},
     breaklines=true,
-    frame=l, % Linie links
+    frame=l,
     framesep=5pt,
     framerule=2pt,
     rulecolor=\color{CyberCyan},
@@ -46,87 +48,287 @@
 }
 
 % --- Meta Data ---
-\title{Ransomware Analyse \& Simulation}
-\subtitle{Von der Bedrohungslage zur technischen Implementierung in Rust}
+\title{Ransomware: Analyse \& Simulation}
+\subtitle{Bedrohungslage, Kill-Chain und technische Implementierung (Rust/Python)}
 \author{\textbf{Demo Präsentation}}
 \date{\today}
 \titlegraphic{\hfill\footnotesize\ttfamily\color{gray}Security Research v1.0}
 
 \begin{document}
-\shorthandoff{"}
+\shorthandoff{"} % Wichtig für Babel/TikZ Kompatibilität
+
 % 1. Title Page
 \maketitle
 
 % ==============================================================================
-% TEIL 1: ALLGEMEINER KONTEXT (Theorie)
+% TEIL 1: THEORIE & BEDROHUNGSLAGE (ERWEITERT)
 % ==============================================================================
 
-\section{Die Bedrohungslage}
+\section{Teil I: Das Ökosystem Ransomware}
 
-\begin{frame}{Ransomware: Status Quo}
+% --- Folie 1: Definition & Evolution ---
+\begin{frame}{Was ist Ransomware?}
     \begin{columns}[T,onlytextwidth]
-        \column{0.5\textwidth}
-            \textbf{Was ist Ransomware?}
-            Schadsoftware, die Daten verschlüsselt und Lösegeld (Krypto-Währung) für die Entschlüsselung fordert.
+        \column{0.6\textwidth}
+            \textbf{Definition:}
+            Malware, die den Zugriff auf Daten oder Systeme durch Verschlüsselung verhindert und für die Freigabe ein Lösegeld fordert.
             
             \vspace{1em}
-            \textbf{Aktuelle Trends:}
+            \textbf{Die Evolution der Erpressung:}
             \begin{itemize}
-                \item \textbf{RaaS:} Ransomware-as-a-Service (Miet-Malware).
-                \item \textbf{Double Extortion:} Verschlüsselung + Drohung mit Datenveröffentlichung.
-                \item \textbf{Zielgerichtete Angriffe:} Fokus auf Kritische Infrastruktur (KRITIS) \& Industrie.
+                \item[\textbf{Gen 1:}] \textbf{Single Extortion:} Nur Verschlüsselung.
+                \item[\textbf{Gen 2:}] \textbf{Double Extortion:} + Diebstahl sensibler Daten (Drohung mit Leak-Seiten).
+                \item[\textbf{Gen 3:}] \textbf{Triple Extortion:} + DDoS-Attacken oder Belästigung von Kunden/Partnern des Opfers.
             \end{itemize}
 
-        \column{0.5\textwidth}
+        \column{0.4\textwidth}
             \centering
-            % TikZ Balkendiagramm (Symbolisch für steigende Schäden)
-            \begin{tikzpicture}
-                \draw[gray!20] (0,0) grid (5,3.5);
-                \draw[thick, ->] (0,0) -- (5.2,0) node[right] {\tiny Jahr};
-                \draw[thick, ->] (0,0) -- (0,3.8) node[above] {\tiny Schaden};
+            % TikZ: Die Eskalationsstufen
+            \begin{tikzpicture}[node distance=0.5cm]
+                \node[draw=TechBlue, fill=LightGrey, rounded corners, minimum width=2.5cm] (L1) {Encryption};
+                \node[draw=TechBlue, fill=CyberCyan!30, rounded corners, minimum width=2.5cm, below=of L1] (L2) {Data Leak};
+                \node[draw=AlertRed, fill=AlertRed!10, rounded corners, minimum width=2.5cm, below=of L2] (L3) {DDoS / Harassment};
                 
-                % Balken
-                \draw[fill=TechBlue!40, draw=none] (0.5,0) rectangle (1.2, 1.0) node[above, black, font=\tiny] {2020};
-                \draw[fill=TechBlue!60, draw=none] (1.5,0) rectangle (2.2, 1.8) node[above, black, font=\tiny] {2022};
-                \draw[fill=CyberCyan, draw=none] (2.5,0) rectangle (3.2, 3.2) node[above, black, font=\tiny] {2024};
-                
-                \node[align=center, font=\footnotesize, below=0.5cm of current bounding box] {Exponentieller Anstieg\\der Schäden};
+                \draw[->, thick, color=gray] (L1) -- (L2);
+                \draw[->, thick, color=gray] (L2) -- (L3);
             \end{tikzpicture}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Die "Cyber Kill Chain" einer Attacke}
-    Der typische Ablauf eines modernen Ransomware-Angriffs:
+% --- Folie 2: RaaS Geschäftsmodell ---
+\begin{frame}{Das Geschäftsmodell: Ransomware-as-a-Service (RaaS)}
+    Ransomware ist heute eine hochprofessionelle Industrie mit Arbeitsteilung.
     
-    \vspace{2em}
+    \vspace{1em}
     \centering
-    % TikZ Flowchart der Killchain
     \begin{tikzpicture}[
-        node distance=0.8cm,
-        phase/.style={rectangle, draw=TechBlue, thick, fill=white, rounded corners, minimum width=2.2cm, minimum height=1.2cm, align=center, font=\scriptsize, drop shadow},
-        arrow/.style={->, >=stealth, thick, color=CyberCyan}
+        node distance=1.5cm,
+        actor/.style={rectangle, draw=SecBlue, thick, fill=white, rounded corners, minimum height=1.2cm, minimum width=3cm, align=center, drop shadow},
+        arrow/.style={->, >=stealth, thick, color=TechBlue}
     ]
-        \node[phase] (init) {\textbf{1. Initial}\\Access\\(Phishing/RDP)};
-        \node[phase, right=of init] (c2) {\textbf{2. C2}\\Communication\\(Beaconing)};
-        \node[phase, right=of c2] (lat) {\textbf{3. Lateral}\\Movement\\(Recon)};
-        \node[phase, right=of lat, fill=CyberCyan!20] (enc) {\textbf{4. Action}\\Encryption\\(Impact)};
+        % Actors
+        \node[actor] (dev) {\textbf{Core Developers}\\(Operator)};
+        \node[actor, right=3cm of dev] (aff) {\textbf{Affiliates}\\(Angreifer)};
+        \node[actor, below=1.5cm of aff, draw=AlertRed] (victim) {\textbf{Opfer}\\(Unternehmen)};
         
-        \draw[arrow] (init) -- (c2);
-        \draw[arrow] (c2) -- (lat);
-        \draw[arrow] (lat) -- (enc);
+        % Relations
+        \draw[arrow] ([yshift=5pt]dev.east) -- node[above, font=\tiny] {Stellt Malware \& C2} ([yshift=5pt]aff.west);
+        \draw[arrow] ([yshift=-5pt]aff.west) -- node[below, font=\tiny] {30\% Provision} ([yshift=-5pt]dev.east);
+        
+        \draw[arrow, color=AlertRed] (aff) -- node[right, font=\tiny] {Infektion} (victim);
+        \draw[arrow, dashed] (victim) -- node[left, font=\tiny, align=right] {Lösegeld\\(Krypto)} ($(dev.south)!0.5!(aff.south)$);
+        
     \end{tikzpicture}
     
-    \vspace{2em}
-    \raggedright
+    \vspace{1em}
     \footnotesize
-    \textbf{Hinweis:} In unserer Simulation fokussieren wir uns auf Schritt 2 (C2) und Schritt 4 (Encryption).
+    \textbf{Vorteil für Kriminelle:} Die Entwickler müssen sich nicht die Hände schmutzig machen (Einbruch), die Affiliates müssen nicht programmieren können.
 \end{frame}
 
+% --- Folie 3: Initial Access ---
+\begin{frame}{Wie kommen sie rein? (Initial Access Vectors)}
+    Die häufigsten Einfallstore für Ransomware-Affiliates:
+    
+    \vspace{1.5em}
+    \centering
+    \begin{tikzpicture}
+        % Achsen
+        \draw[gray!50] (0,0) -- (9,0);
+        \draw[gray!50] (0,0) -- (0,3.5);
+        
+        % Balken 1: Phishing
+        \draw[fill=TechBlue] (0, 2.8) rectangle (6.5, 3.3);
+        \node[right, font=\footnotesize] at (6.5, 3.05) {Phishing / Social Eng. ($\sim$40\%)};
+        
+        % Balken 2: Vulnerabilities
+        \draw[fill=CyberCyan] (0, 1.8) rectangle (4.5, 2.3);
+        \node[right, font=\footnotesize] at (4.5, 2.05) {Schwachstellen (VPN/Citrix) ($\sim$25\%)};
+        
+        % Balken 3: RDP
+        \draw[fill=SecBlue] (0, 0.8) rectangle (3.5, 1.3);
+        \node[right, font=\footnotesize] at (3.5, 1.05) {Exposed RDP / Credential Stuffing ($\sim$20\%)};
+        
+        % Balken 4: Supply Chain
+        \draw[fill=gray] (0, -0.2) rectangle (1.5, 0.3);
+        \node[right, font=\footnotesize] at (1.5, 0.05) {Supply Chain / Sonstiges ($\sim$15\%)};
+        
+    \end{tikzpicture}
+    
+    \begin{tikzpicture}[remember picture, overlay]
+        \node[anchor=south east, xshift=-10pt, yshift=5pt, font=\tiny\color{gray}] at (current page.south east) {Datenbasis: Aggregierte Reports 2023/2024 (Mandiant, Sophos)};
+    \end{tikzpicture}
+\end{frame}
+
+% --- Folie 4: Technische Kill Chain ---
+\begin{frame}{Die technische "Kill Chain"}
+    Vom ersten Zugriff bis zur Verschlüsselung vergehen oft Wochen ("Dwell Time").
+    
+    \vspace{1.5em}
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.4cm,
+        phase/.style={rectangle, draw=TechBlue, thick, fill=white, rounded corners, minimum width=2.6cm, minimum height=1.4cm, align=center, font=\scriptsize, drop shadow},
+        arrow/.style={->, >=stealth, thick, color=CyberCyan, line width=1.5pt}
+    ]
+        % Phasen
+        \node[phase] (access) {\textbf{1. Access}\\\tiny Phishing, RDP\\Exploits};
+        \node[phase, right=of access] (persist) {\textbf{2. Persistence}\\\& C2\\\tiny Beaconing};
+        \node[phase, right=of persist] (lat) {\textbf{3. Recon}\\\& Lateral Mov.\\\tiny AD-Übernahme};
+        \node[phase, right=of lat, draw=AlertRed, fill=AlertRed!5] (impact) {\textbf{4. Impact}\\\tiny Data Exfil \&\\Encryption};
+        
+        % Pfeile
+        \draw[arrow] (access) -- (persist);
+        \draw[arrow] (persist) -- (lat);
+        \draw[arrow] (lat) -- (impact);
+        
+    \end{tikzpicture}
+    
+    \vspace{1.5em}
+    \begin{itemize}
+        \item \textbf{Schritt 2 \& 3} sind entscheidend für die Verteidigung. Sobald Schritt 4 beginnt, ist es meist zu spät.
+        \item Unsere Simulation überspringt \textbf{Schritt 3 (Recon \& lateral Movement)}.
+    \end{itemize}
+\end{frame}
+
+% --- Folie 5: Krypto-Hintergrund ---
+\begin{frame}{Exkurs: Warum wir den Key nicht einfach "finden"}
+    Professionelle Ransomware nutzt \textbf{hybride Verschlüsselung}, um Geschwindigkeit mit Sicherheit zu kombinieren.
+    
+    \vspace{1em}
+    \centering
+    \begin{tikzpicture}[
+        node distance=1cm,
+        box/.style={rectangle, draw=gray, rounded corners, font=\tiny, align=center, minimum width=1.8cm, minimum height=1cm},
+        arrow/.style={->, >=stealth, color=TechBlue}
+    ]
+        % Symmetrisch
+        \node[box, draw=TechBlue] (file) {Datei};
+        \node[box, right=of file] (aes) {\textbf{AES Key}\\(Symmetrisch)};
+        \node[box, draw=AlertRed, right=of aes] (encfile) {Encrypted\\File};
+        
+        % Asymmetrisch
+        \node[box, above=of aes] (pub) {\textbf{RSA Public Key}\\(Im Code)};
+        \node[box, draw=AlertRed, right=of pub] (enckey) {Encrypted\\AES Key};
+        
+        % Pfeile
+        \draw[arrow] (file) -- (aes);
+        \draw[arrow] (aes) -- (encfile);
+        \draw[arrow] (aes) -- (pub);
+        \draw[arrow] (pub) -- (enckey);
+        
+        \node[right=0.2cm of encfile, font=\tiny, color=gray, align=left] {$\leftarrow$ Schnell,\\aber Key liegt im RAM};
+        \node[right=0.2cm of enckey, font=\tiny, color=gray, align=left] {$\leftarrow$ Key ist sicher\\weggeschlossen};
+
+    \end{tikzpicture}
+    
+    \vspace{1em}
+    \raggedright
+    \footnotesize
+    \textbf{Das Problem:} Der AES-Key (zum Entschlüsseln nötig) wird mit dem Public Key des Angreifers verschlüsselt und aus dem Speicher gelöscht. Nur der Angreifer hat den Private Key zum Wiederherstellen.
+    \newline
+    \textit{Hinweis: In unserer Demo vereinfachen wir dies und speichern den Key lokal (`rescue.key`).}
+\end{frame}
+
+% --- Folie 6: MITRE ATT&CK ---
+\begin{frame}{MITRE ATT\&CK Taktiken}
+    \centering
+    \footnotesize
+    \begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
+        \toprule
+        \textcolor{TechBlue}{\textbf{Initial Access}} & \textcolor{TechBlue}{\textbf{Persistence}} & \textcolor{TechBlue}{\textbf{Command \& Control}} & \textcolor{AlertRed}{\textbf{Impact}} \\
+        \midrule
+        $\bullet$ Phishing (T1566) & $\bullet$ Reg Run Keys & $\bullet$ Web Protocols & $\bullet$ Data Encrypted \\
+        $\bullet$ Exploit Public App & $\bullet$ Create Account & $\bullet$ Non-Standard Port & \quad for Impact \\
+        $\bullet$ Valid Accounts & $\bullet$ Scheduled Task & $\bullet$ Encrypted Channel & $\bullet$ Service Stop \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{2em}
+    \raggedright
+    \textbf{Mapping zur Demo:}
+    Unsere Rust-Malware nutzt \textit{Registry Run Keys / Systemd} für Persistence und \textit{Non-Standard Ports} (TCP Socket) für C2.
+\end{frame}
+
+% --- Folie 5: C2 Context ---
+\begin{frame}{Command \& Control (C2) Architektur}
+    Die "Lebensader" des Angriffs: C2 steuert Payloads, empfängt Keys und exfiltrierte Daten.
+    
+    \vspace{1em}
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm]
+        % Nodes
+        \node[draw=SecBlue, fill=LightGrey, rounded corners, align=center] (corp) {
+            \textbf{Corporate Network}\\
+            \scriptsize Client A \quad Client B
+        };
+        
+        \node[draw=AlertRed, thick, fill=white, right=2cm of corp, align=center, rounded corners] (infected) {Infected\\Host};
+        
+        % KORREKTUR: Cloud als Node-Shape, nicht als Befehl
+        \node[cloud, cloud puffs=10, draw=gray, aspect=2, right=2cm of infected, align=center] (internet) {Internet};
+        
+        \node[draw=TechBlue, fill=SecBlue, text=white, rounded corners, right=0.5cm of internet] (c2) {C2 Server};
+        
+        % Connections
+        \draw[thick] (corp) -- (infected);
+        \draw[<->, dashed, thick, color=AlertRed] (infected) -- node[above, font=\tiny] {HTTPS Beaconing} node[below, font=\tiny] {DNS Tunneling} (internet);
+        \draw[<->, thick] (internet) -- (c2);
+        
+    \end{tikzpicture}
+    
+    \vspace{1em}
+    \raggedright
+    \small
+    Nutzung unauffälliger Kanäle (Port 443, DNS), um in der Masse des Traffics unterzugehen.
+
+    \begin{tikzpicture}[remember picture, overlay]
+        \node[anchor=south east, xshift=-10pt, yshift=5pt, font=\tiny\color{gray}] at (current page.south east) {Quellen: Halcyon – C2 in Ransomware; Packetlabs Deep Dive};
+    \end{tikzpicture}
+\end{frame}
+
+
+% --- Folie 6: Defense ---
+\begin{frame}{Erkennung \& Abwehr (Defense in Depth)}
+    
+    \begin{columns}
+        \column{0.6\textwidth}
+            \textbf{Technische Maßnahmen:}
+            \begin{itemize}
+                \item \textbf{C2-Detection:} Blockieren von bekannten Malicious IPs/Domains \& Analyse von Beaconing-Mustern.
+                \item \textbf{EDR (Endpoint Detection):} Überwachung auf Prozess-Injections und Massen-Dateiänderungen.
+            \end{itemize}
+            
+            \vspace{0.5em}
+            \textbf{Organisatorisch:}
+            \begin{itemize}
+                \item Offline-Backups (Immutable).
+                \item Netzwerksegmentierung.
+            \end{itemize}
+
+        \column{0.4\textwidth}
+            \centering
+            % TikZ Layers
+            \begin{tikzpicture}
+                \node[draw=TechBlue, fill=white, minimum width=3cm, rounded corners] (L1) {Awareness};
+                \node[draw=TechBlue, fill=LightGrey, minimum width=3cm, rounded corners, above=0.2cm of L1] (L2) {Firewall / IDS};
+                \node[draw=TechBlue, fill=CyberCyan!30, minimum width=3cm, rounded corners, above=0.2cm of L2] (L3) {EDR / AV};
+                \node[draw=SecBlue, fill=TechBlue, text=white, minimum width=3cm, rounded corners, above=0.2cm of L3] (L4) {Backup};
+                
+                \node[right=0.2cm of L4, font=\tiny, color=gray] {Letzte Linie};
+            \end{tikzpicture}
+    \end{columns}
+
+    \begin{tikzpicture}[remember picture, overlay]
+        \node[anchor=south east, xshift=-10pt, yshift=5pt, font=\tiny\color{gray}] at (current page.south east) {Quellen: BSI; Darktrace – Early Signs of Ransomware};
+    \end{tikzpicture}
+\end{frame}
+
+
 % ==============================================================================
-% TEIL 2: DIE TECHNISCHE ANALYSE (Simulation)
+% TEIL 2: TECHNISCHE SIMULATION (Praxis)
 % ==============================================================================
 
-\section{Analyse der Simulation}
+\section{Teil II: Technische Simulation}
 
 \begin{frame}{Architektur der Simulation}
     \centering
@@ -152,22 +354,18 @@
 
     \vspace{1.5em}
     \begin{itemize}
-        \item \textbf{Reverse Shell Prinzip:} Der Agent baut die Verbindung auf, nicht der Server. Das umgeht eingehende Firewall-Regeln.
+        \item \textbf{Reverse Shell Prinzip:} Der Agent baut die Verbindung auf (Outbound), um Inbound-Firewall-Regeln zu umgehen.
         \item \textbf{Technologie:} Rust (Client) für Performance und Sicherheit, Python (Server) für einfache Handhabung.
     \end{itemize}
 \end{frame}
 
 \begin{frame}{Der Agent: Warum Rust?}
-    Rust etabliert sich zunehmend in der Malware-Entwicklung ("Rustyware").
-    
-    \vspace{1em}
-    
     \begin{columns}[T,onlytextwidth]
         \column{0.5\textwidth}
             \begin{block}{Technische Vorteile}
                 \begin{itemize}
                     \item \textbf{Memory Safety:} Keine Buffer Overflows (weniger Abstürze beim Opfer).
-                    \item \textbf{Zero Runtime:} Keine Installation von Python/Java nötig.
+                    \item \textbf{Zero Runtime:} Keine Installation von Python/Java nötig (Single Binary).
                     \item \textbf{Cross-Platform:} Ein Code für Linux, Windows \& macOS.
                 \end{itemize}
             \end{block}
@@ -241,12 +439,7 @@ Restart=always
     \end{columns}
 \end{frame}
 
-% ==============================================================================
-% TEIL 3: DEMO WORKFLOW (Praxis)
-% ==============================================================================
-
-\section{Live Demo Workflow}
-
+% --- Demo Workflow ---
 \begin{frame}{Ablauf der Demonstration}
     Wie die Komponenten im Test zusammenspielen:
     
@@ -272,9 +465,9 @@ Restart=always
     \normalsize
     \vspace{2em}
     \begin{itemize}
-        \item[\checkmark] \textbf{Simpel:} Sockets + Standard-Krypto reichen für maximalen Schaden.
-        \item[\checkmark] \textbf{Effizient:} Rust ermöglicht extrem schnelle, schwer erkennbare Malware.
-        \item[\checkmark] \textbf{Relevant:} Backup-Strategien sind der einzige wirkliche Schutz.
+        \item[\checkmark] \textbf{Bedrohung:} Ransomware professionalisiert sich (RaaS, C2).
+        \item[\checkmark] \textbf{Technik:} Rust + Sockets ermöglichen potente Malware.
+        \item[\checkmark] \textbf{Schutz:} Defense-in-Depth ist alternativlos.
     \end{itemize}
 \end{frame}
 
