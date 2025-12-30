@@ -129,6 +129,12 @@ cargo build --release
 
 ! Achtung: Windows Defender oder Antiviren-Programme werden diese Datei wahrscheinlich sofort löschen. Fügen Sie den Ordner zu den Ausnahmen hinzu oder deaktivieren Sie den Echtzeitschutz für die Demo.
 
+4. Von Linux für Windows kompilieren
+
+```bash
+RUSTFLAGS="-C link-args=-static" cargo build --release --target x86_64-pc-windows-gnu
+```
+
 ## Bedienung des C2 Servers
 
 Sobald das Opfer die .exe ausführt, erscheint im Server-Terminal:
