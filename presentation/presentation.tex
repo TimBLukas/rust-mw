@@ -1,1074 +1,636 @@
-\documentclass[aspectratio=169, 10pt]{beamer}
+\documentclass[aspectratio=169]{beamer}
 
-% --- Theme & Design ---
-\usetheme[progressbar=frametitle, block=fill]{metropolis}
-
-% --- Farben (Modernes Security-Blau Schema) ---
-\definecolor{SecBlue}{RGB}{10, 30, 60}       % Sehr dunkles Blau (Background/Text)
-\definecolor{TechBlue}{RGB}{0, 85, 150}      % Mittleres Blau (Elemente)
-\definecolor{CyberCyan}{RGB}{0, 180, 216}    % Helles Cyan (Highlights)
-\definecolor{LightGrey}{RGB}{248, 249, 250}  % Fast Weiß
-\definecolor{AlertRed}{RGB}{200, 40, 40}     % Für Bedrohungen
-
-% Farb-Anpassungen des Themes
-\setbeamercolor{frametitle}{bg=white, fg=TechBlue}
-\setbeamercolor{title separator}{fg=CyberCyan}
-\setbeamercolor{progress bar}{fg=CyberCyan, bg=LightGrey}
-\setbeamercolor{alerted text}{fg=AlertRed}
-\setbeamercolor{normal text}{fg=SecBlue}
-\setbeamercolor{block title}{bg=TechBlue, fg=white}
-\setbeamercolor{block body}{bg=LightGrey, fg=SecBlue}
-\definecolor{mDarkTeal}{HTML}{23373b}
-\definecolor{mLightBrown}{HTML}{EB811B}
-\definecolor{mGray}{HTML}{7f8c8d}
-\definecolor{mLightGray}{HTML}{ecf0f1}
-\definecolor{mRed}{HTML}{e74c3c}
-\definecolor{mBlue}{HTML}{3498db}
-\definecolor{mGreen}{HTML}{27ae60}
-% --- Pakete ---
-\usepackage[utf8]{inputenc}
-\usepackage[ngerman]{babel}
+% Theme und Packages
+\usetheme{metropolis}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{tikz}
-\usetikzlibrary{shapes, arrows, positioning, shadows, calc, fit, shapes.geometric, patterns, matrix}
-\usetikzlibrary{shapes, shapes.symbols, arrows, positioning, shadows, calc, fit, patterns, matrix}
+\usepackage[ngerman]{babel}
+\usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{pifont} % Für Checkmarks
-\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[edges]{forest}
 
-% --- Code Listing Style ---
-\lstset{
-    basicstyle=\ttfamily\scriptsize\color{SecBlue},
-    keywordstyle=\color{TechBlue}\bfseries,
-    commentstyle=\color{gray!80},
-    stringstyle=\color{teal},
-    numberstyle=\tiny\color{gray},
-    breaklines=true,
-    frame=l,
-    framesep=5pt,
-    framerule=2pt,
-    rulecolor=\color{CyberCyan},
-    backgroundcolor=\color{LightGrey},
-    showstringspaces=false,
-    language=bash
-}
+% Farbschema
+\definecolor{darkaccent}{RGB}{35,55,75}
+\definecolor{chartcolor1}{RGB}{231,76,60}
+\definecolor{chartcolor2}{RGB}{52,152,219}
+\definecolor{chartcolor3}{RGB}{46,204,113}
+\definecolor{chartcolor4}{RGB}{241,196,15}
+\definecolor{chartcolor5}{RGB}{155,89,182}
+\definecolor{chartcolor6}{RGB}{230,126,34}
 
-% --- Meta Data ---
-\title{Ransomware: Analyse \& Simulation}
-\subtitle{Bedrohungslage, Kill-Chain und technische Implementierung (Rust/Python)}
-\author{\textbf{Demo Präsentation}}
+\setbeamercolor{frametitle}{bg=darkaccent}
+\setbeamercolor{progress bar}{fg=orange,bg=gray}
+
+% Titelseite Informationen
+\title{Ransomware}
+\subtitle{Anatomie, Netzwerkerkennung und Zero-Loss Recovery}
+\author{Ihr Name}
 \date{\today}
+\institute{Ihre Institution}
 
 \begin{document}
-\shorthandoff{"} % Wichtig für Babel/TikZ Kompatibilität
 
-% 1. Title Page
-\maketitle
-
-% ==============================================================================
-% TEIL 1: THEORIE & BEDROHUNGSLAGE (ERWEITERT)
-% ==============================================================================
-
-\section{Teil I: Das Ökosystem Ransomware}
-
-% --- Folie 1: Definition & Evolution ---
-\begin{frame}{Was ist Ransomware?}
-    \begin{columns}[T,onlytextwidth]
-        \column{0.6\textwidth}
-            \textbf{Definition:}
-            Malware, die den Zugriff auf Daten oder Systeme durch Verschlüsselung verhindert und für die Freigabe ein Lösegeld fordert.
-            
-            \vspace{1em}
-            \textbf{Die Evolution der Erpressung:}
-            \begin{itemize}
-                \item[\textbf{Gen 1:}] \textbf{Single Extortion:} Nur Verschlüsselung.
-                \item[\textbf{Gen 2:}] \textbf{Double Extortion:} + Diebstahl sensibler Daten (Drohung mit Leak-Seiten).
-                \item[\textbf{Gen 3:}] \textbf{Triple Extortion:} + DDoS-Attacken oder Belästigung von Kunden/Partnern des Opfers.
-            \end{itemize}
-
-        \column{0.4\textwidth}
-            \centering
-            % TikZ: Die Eskalationsstufen
-            \begin{tikzpicture}[node distance=0.5cm]
-                \node[draw=TechBlue, fill=LightGrey, rounded corners, minimum width=2.5cm] (L1) {Encryption};
-                \node[draw=TechBlue, fill=CyberCyan!30, rounded corners, minimum width=2.5cm, below=of L1] (L2) {Data Leak};
-                \node[draw=AlertRed, fill=AlertRed!10, rounded corners, minimum width=2.5cm, below=of L2] (L3) {DDoS / Harassment};
-                
-                \draw[->, thick, color=gray] (L1) -- (L2);
-                \draw[->, thick, color=gray] (L2) -- (L3);
-            \end{tikzpicture}
-    \end{columns}
+% Titelfolie
+\begin{frame}
+  \titlepage
 \end{frame}
 
-% --- Folie 2: RaaS Geschäftsmodell ---
-\begin{frame}{Das Geschäftsmodell: Ransomware-as-a-Service (RaaS)}
-    Ransomware ist heute eine hochprofessionelle Industrie mit Arbeitsteilung.
-    
-    \vspace{1em}
-    \centering
-    \begin{tikzpicture}[
-        node distance=1.5cm,
-        actor/.style={rectangle, draw=SecBlue, thick, fill=white, rounded corners, minimum height=1.2cm, minimum width=3cm, align=center, drop shadow},
-        arrow/.style={->, >=stealth, thick, color=TechBlue}
-    ]
-        % Actors
-        \node[actor] (dev) {\textbf{Core Developers}\\(Operator)};
-        \node[actor, right=3cm of dev] (aff) {\textbf{Affiliates}\\(Angreifer)};
-        \node[actor, below=1.5cm of aff, draw=AlertRed] (victim) {\textbf{Opfer}\\(Unternehmen)};
-        
-        % Relations
-        \draw[arrow] ([yshift=5pt]dev.east) -- node[above, font=\tiny] {Stellt Malware \& C2} ([yshift=5pt]aff.west);
-        \draw[arrow] ([yshift=-5pt]aff.west) -- node[below, font=\tiny] {30\% Provision} ([yshift=-5pt]dev.east);
-        
-        \draw[arrow, color=AlertRed] (aff) -- node[right, font=\tiny] {Infektion} (victim);
-        \draw[arrow, dashed] (victim) -- node[left, font=\tiny, align=right] {Lösegeld\\(Krypto)} ($(dev.south)!0.5!(aff.south)$);
-        
-    \end{tikzpicture}
-    
-    \vspace{1em}
-    \footnotesize
-    \textbf{Vorteil für Kriminelle:} Die Entwickler müssen sich nicht die Hände schmutzig machen (Einbruch), die Affiliates müssen nicht programmieren können.
+% Agenda
+\begin{frame}{Agenda}
+  \tableofcontents
 \end{frame}
 
-% --- Folie 3: Initial Access ---
-\begin{frame}{Wie kommen sie rein? (Initial Access Vectors)}
-    Die häufigsten Einfallstore für Ransomware-Affiliates:
-    
-    \vspace{1.5em}
-    \centering
-    \begin{tikzpicture}
-        % Achsen
-        \draw[gray!50] (0,0) -- (9,0);
-        \draw[gray!50] (0,0) -- (0,3.5);
-        
-        % Balken 1: Phishing
-        \draw[fill=TechBlue] (0, 2.8) rectangle (6.5, 3.3);
-        \node[right, font=\footnotesize] at (6.5, 3.05) {Phishing / Social Eng. ($\sim$40\%)};
-        
-        % Balken 2: Vulnerabilities
-        \draw[fill=CyberCyan] (0, 1.8) rectangle (4.5, 2.3);
-        \node[right, font=\footnotesize] at (4.5, 2.05) {Schwachstellen (VPN/Citrix) ($\sim$25\%)};
-        
-        % Balken 3: RDP
-        \draw[fill=SecBlue] (0, 0.8) rectangle (3.5, 1.3);
-        \node[right, font=\footnotesize] at (3.5, 1.05) {Exposed RDP / Credential Stuffing ($\sim$20\%)};
-        
-        % Balken 4: Supply Chain
-        \draw[fill=gray] (0, -0.2) rectangle (1.5, 0.3);
-        \node[right, font=\footnotesize] at (1.5, 0.05) {Supply Chain / Sonstiges ($\sim$15\%)};
-        
-    \end{tikzpicture}
-    
-    \begin{tikzpicture}[remember picture, overlay]
-        \node[anchor=south east, xshift=-10pt, yshift=5pt, font=\tiny\color{gray}] at (current page.south east) {Datenbasis: Aggregierte Reports 2023/2024 (Mandiant, Sophos)};
-    \end{tikzpicture}
+% Sektion 1: Entwicklung & Geschichte
+\section{Entwicklung \& Geschichte}
+
+\begin{frame}{Historischer Abriss}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \textbf{Meilensteine:}
+      \begin{itemize}
+        \item \textbf{1989}: AIDS Trojan - erster dokumentierter Ransomware-Angriff
+        \item \textbf{2005}: Wiederaufleben durch Internet und Kryptowährungen
+        \item \textbf{2017}: WannaCry-Ausbruch mit globaler Aufmerksamkeit
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{figure}
+        \includegraphics[width=\textwidth]{images/historical_timeline.png}
+        \caption{Entwicklung von Ransomware über die Jahre}
+      \end{figure}
+    \end{column}
+  \end{columns}
 \end{frame}
 
-% --- Folie 4: Technische Kill Chain ---
-\begin{frame}{Die technische "Kill Chain"}
-    Vom ersten Zugriff bis zur Verschlüsselung vergehen oft Wochen ("Dwell Time").
-    
-    \vspace{1.5em}
-    \centering
-    \begin{tikzpicture}[
-        node distance=0.4cm,
-        phase/.style={rectangle, draw=TechBlue, thick, fill=white, rounded corners, minimum width=2.6cm, minimum height=1.4cm, align=center, font=\scriptsize, drop shadow},
-        arrow/.style={->, >=stealth, thick, color=CyberCyan, line width=1.5pt}
-    ]
-        % Phasen
-        \node[phase] (access) {\textbf{1. Access}\\\tiny Phishing, RDP\\Exploits};
-        \node[phase, right=of access] (persist) {\textbf{2. Persistence}\\\& C2\\\tiny Beaconing};
-        \node[phase, right=of persist] (lat) {\textbf{3. Recon}\\\& Lateral Mov.\\\tiny AD-Übernahme};
-        \node[phase, right=of lat, draw=AlertRed, fill=AlertRed!5] (impact) {\textbf{4. Impact}\\\tiny Data Exfil \&\\Encryption};
-        
-        % Pfeile
-        \draw[arrow] (access) -- (persist);
-        \draw[arrow] (persist) -- (lat);
-        \draw[arrow] (lat) -- (impact);
-        
-    \end{tikzpicture}
-    
-    \vspace{1.5em}
-    \begin{itemize}
-        \item \textbf{Schritt 2 \& 3} sind entscheidend für die Verteidigung. Sobald Schritt 4 beginnt, ist es meist zu spät.
-        \item Unsere Simulation überspringt \textbf{Schritt 3 (Recon \& lateral Movement)}.
-    \end{itemize}
-\end{frame}
+% Sektion 2: Aktuelle Bedrohungslage
+\section{Aktuelle Bedrohungslage}
 
-% --- Folie 5: Krypto-Hintergrund ---
-\begin{frame}{Exkurs: Warum wir den Key nicht einfach "finden"}
-    Professionelle Ransomware nutzt \textbf{hybride Verschlüsselung}, um Geschwindigkeit mit Sicherheit zu kombinieren.
-    
-    \vspace{1em}
-    \centering
-    \begin{tikzpicture}[
-        node distance=1cm,
-        box/.style={rectangle, draw=gray, rounded corners, font=\tiny, align=center, minimum width=1.8cm, minimum height=1cm},
-        arrow/.style={->, >=stealth, color=TechBlue}
-    ]
-        % Symmetrisch
-        \node[box, draw=TechBlue] (file) {Datei};
-        \node[box, right=of file] (aes) {\textbf{AES Key}\\(Symmetrisch)};
-        \node[box, draw=AlertRed, right=of aes] (encfile) {Encrypted\\File};
-        
-        % Asymmetrisch
-        \node[box, above=of aes] (pub) {\textbf{RSA Public Key}\\(Im Code)};
-        \node[box, draw=AlertRed, right=of pub] (enckey) {Encrypted\\AES Key};
-        
-        % Pfeile
-        \draw[arrow] (file) -- (aes);
-        \draw[arrow] (aes) -- (encfile);
-        \draw[arrow] (aes) -- (pub);
-        \draw[arrow] (pub) -- (enckey);
-        
-        \node[right=0.2cm of encfile, font=\tiny, color=gray, align=left] {$\leftarrow$ Schnell,\\aber Key liegt im RAM};
-        \node[right=0.2cm of enckey, font=\tiny, color=gray, align=left] {$\leftarrow$ Key ist sicher\\weggeschlossen};
-
-    \end{tikzpicture}
-    
-    \vspace{1em}
-    \raggedright
-    \footnotesize
-    \textbf{Das Problem:} Der AES-Key (zum Entschlüsseln nötig) wird mit dem Public Key des Angreifers verschlüsselt und aus dem Speicher gelöscht. Nur der Angreifer hat den Private Key zum Wiederherstellen.
-    \newline
-    \textit{Hinweis: In unserer Demo vereinfachen wir dies und speichern den Key lokal (`rescue.key`).}
-\end{frame}
-
-% --- Folie 6: MITRE ATT&CK ---
-\begin{frame}{MITRE ATT\&CK Taktiken}
-    \centering
-    \footnotesize
-    \begin{tabular}{p{3.5cm} p{3.5cm} p{3.5cm} p{3.5cm}}
-        \toprule
-        \textcolor{TechBlue}{\textbf{Initial Access}} & \textcolor{TechBlue}{\textbf{Persistence}} & \textcolor{TechBlue}{\textbf{Command \& Control}} & \textcolor{AlertRed}{\textbf{Impact}} \\
-        \midrule
-        $\bullet$ Phishing (T1566) & $\bullet$ Reg Run Keys & $\bullet$ Web Protocols & $\bullet$ Data Encrypted \\
-        $\bullet$ Exploit Public App & $\bullet$ Create Account & $\bullet$ Non-Standard Port & \quad for Impact \\
-        $\bullet$ Valid Accounts & $\bullet$ Scheduled Task & $\bullet$ Encrypted Channel & $\bullet$ Service Stop \\
-        \bottomrule
-    \end{tabular}
-
-    \vspace{2em}
-    \raggedright
-    \textbf{Mapping zur Demo:}
-    Unsere Rust-Malware nutzt \textit{Registry Run Keys / Systemd} für Persistence und \textit{Non-Standard Ports} (TCP Socket) für C2.
-\end{frame}
-
-% --- Folie 5: C2 Context ---
-\begin{frame}{Command \& Control (C2) Architektur}
-    Die "Lebensader" des Angriffs: C2 steuert Payloads, empfängt Keys und exfiltrierte Daten.
-    
-    \vspace{1em}
-    \centering
-    \begin{tikzpicture}[node distance=1.5cm]
-        % Nodes
-        \node[draw=SecBlue, fill=LightGrey, rounded corners, align=center] (corp) {
-            \textbf{Corporate Network}\\
-            \scriptsize Client A \quad Client B
+\begin{frame}{Finanzielle Auswirkungen}
+  \begin{columns}
+    \begin{column}{0.45\textwidth}
+      \textbf{Geschätzte Weltweite Schäden}
+      \begin{itemize}
+        \item 2017: 5 Mrd. USD
+        \item 2024: 42 Mrd. USD
+      \end{itemize}
+      \vspace{0.5em}
+    \end{column}
+    \begin{column}{0.55\textwidth}
+      \begin{tikzpicture}
+        \begin{axis}[
+          width=\textwidth,
+          height=0.7\textheight,
+          xlabel={Jahr},
+          ylabel={Schaden (Mrd. USD)},
+          ymin=0, ymax=45,
+          xtick={2015,2017,2019,2021,2024},
+          ytick={0,10,20,30,40},
+          grid=major,
+          legend pos=north west,
+          ylabel near ticks,
+          xlabel near ticks,
+          x tick label style={/pgf/number format/1000 sep={}}
+        ]
+        \addplot[
+          color=chartcolor1,
+          mark=*,
+          line width=2pt
+        ] coordinates {
+          (2015,0.325)
+          (2017,5)
+          (2019,11.5)
+          (2021,20)
+          (2024,42)
         };
-        
-        \node[draw=AlertRed, thick, fill=white, right=2cm of corp, align=center, rounded corners] (infected) {Infected\\Host};
-        
-        % KORREKTUR: Cloud als Node-Shape, nicht als Befehl
-        \node[cloud, cloud puffs=10, draw=gray, aspect=2, right=2cm of infected, align=center] (internet) {Internet};
-        
-        \node[draw=TechBlue, fill=SecBlue, text=white, rounded corners, right=0.5cm of internet] (c2) {C2 Server};
-        
-        % Connections
-        \draw[thick] (corp) -- (infected);
-        \draw[<->, dashed, thick, color=AlertRed] (infected) -- node[above, font=\tiny] {HTTPS Beaconing} node[below, font=\tiny] {DNS Tunneling} (internet);
-        \draw[<->, thick] (internet) -- (c2);
-        
-    \end{tikzpicture}
-    
-    \vspace{1em}
-    \raggedright
-    \small
-    Nutzung unauffälliger Kanäle (Port 443, DNS), um in der Masse des Traffics unterzugehen.
-
-    \begin{tikzpicture}[remember picture, overlay]
-        \node[anchor=south east, xshift=-10pt, yshift=5pt, font=\tiny\color{gray}] at (current page.south east) {Quellen: Halcyon – C2 in Ransomware; Packetlabs Deep Dive};
-    \end{tikzpicture}
+        \legend{Weltweite Schäden}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
 \end{frame}
 
-
-% --- Folie 6: Defense ---
-\begin{frame}{Erkennung \& Abwehr (Defense in Depth)}
-    
-    \begin{columns}
-        \column{0.6\textwidth}
-            \textbf{Technische Maßnahmen:}
-            \begin{itemize}
-                \item \textbf{C2-Detection:} Blockieren von bekannten Malicious IPs/Domains \& Analyse von Beaconing-Mustern.
-                \item \textbf{EDR (Endpoint Detection):} Überwachung auf Prozess-Injections und Massen-Dateiänderungen.
-            \end{itemize}
-            
-            \vspace{0.5em}
-            \textbf{Organisatorisch:}
-            \begin{itemize}
-                \item Offline-Backups (Immutable).
-                \item Netzwerksegmentierung.
-            \end{itemize}
-
-        \column{0.4\textwidth}
-            \centering
-            % TikZ Layers
-            \begin{tikzpicture}
-                \node[draw=TechBlue, fill=white, minimum width=3cm, rounded corners] (L1) {Awareness};
-                \node[draw=TechBlue, fill=LightGrey, minimum width=3cm, rounded corners, above=0.2cm of L1] (L2) {Firewall / IDS};
-                \node[draw=TechBlue, fill=CyberCyan!30, minimum width=3cm, rounded corners, above=0.2cm of L2] (L3) {EDR / AV};
-                \node[draw=SecBlue, fill=TechBlue, text=white, minimum width=3cm, rounded corners, above=0.2cm of L3] (L4) {Backup};
-                
-                \node[right=0.2cm of L4, font=\tiny, color=gray] {Letzte Linie};
-            \end{tikzpicture}
-    \end{columns}
-
-    \begin{tikzpicture}[remember picture, overlay]
-        \node[anchor=south east, xshift=-10pt, yshift=5pt, font=\tiny\color{gray}] at (current page.south east) {Quellen: BSI; Darktrace – Early Signs of Ransomware};
-    \end{tikzpicture}
-\end{frame}
-
-
-% ==============================================================================
-% TEIL 2: TECHNISCHE SIMULATION (Praxis)
-% ==============================================================================
-
-\section{Teil II: Technische Simulation}
-
-\begin{frame}{Architektur der Simulation}
-    \centering
-    \begin{tikzpicture}[
-        node distance=2cm,
-        box/.style={rectangle, draw=none, fill=LightGrey, rounded corners, minimum height=1.5cm, minimum width=3.5cm, align=center, drop shadow},
-        label/.style={font=\tiny, color=gray},
-        arrow/.style={->, >=stealth, thick, color=TechBlue}
-    ]
-        % Nodes
-        \node[box] (victim) {\textbf{\textcolor{CyberCyan}{RUST AGENT}}\\(Victim Client)};
-        \node[box, right=4cm of victim] (c2) {\textbf{\textcolor{TechBlue}{PYTHON C2}}\\(Attacker Server)};
-        
-        % Firewall Wall Visualisierung
-        \draw[line width=2pt, dashed, color=gray!50] (4, -1.8) -- (4, 1.8);
-        \node[fill=white, text=gray, font=\tiny, inner sep=2pt] at (4,0) {Firewall / NAT};
-        
-        % Arrows
-        \draw[arrow] ([yshift=8pt]victim.east) -- node[above, font=\tiny, align=center] {1. Reverse TCP Connect\\(Port 4444)} ([yshift=8pt]c2.west);
-        \draw[arrow, dashed] ([yshift=-8pt]c2.west) -- node[below, font=\tiny, align=center] {2. Commands\\(encrypt/decrypt)} ([yshift=-8pt]victim.east);
-        
-    \end{tikzpicture}
-
-    \vspace{1.5em}
-    \begin{itemize}
-        \item \textbf{Reverse Shell Prinzip:} Der Agent baut die Verbindung auf (Outbound), um Inbound-Firewall-Regeln zu umgehen.
-        \item \textbf{Technologie:} Rust (Client) für Performance und Sicherheit, Python (Server) für einfache Handhabung.
-    \end{itemize}
-\end{frame}
-
-\begin{frame}{Der Agent: Warum Rust?}
-    \begin{columns}[T,onlytextwidth]
-        \column{0.5\textwidth}
-            \begin{block}{Technische Vorteile}
-                \begin{itemize}
-                    \item \textbf{Memory Safety:} Keine Buffer Overflows (weniger Abstürze beim Opfer).
-                    \item \textbf{Zero Runtime:} Keine Installation von Python/Java nötig (Single Binary).
-                    \item \textbf{Cross-Platform:} Ein Code für Linux, Windows \& macOS.
-                \end{itemize}
-            \end{block}
-        
-        \column{0.45\textwidth}
-            \begin{block}{Evasion (Erkennung)}
-                \begin{itemize}
-                    \item Komplexer Maschinencode erschwert Reverse Engineering.
-                    \item Geringere Erkennungsrate bei klassischen AV-Signaturen im Vergleich zu C/C++.
-                \end{itemize}
-            \end{block}
-    \end{columns}
-\end{frame}
-
-% Cryptography Flow
-\begin{frame}{Kryptographie: Der "Atomic Lock"}
-    Ein kritischer Fehler bei Malware ist Datenverlust durch Abstürze. Unser Agent nutzt ein atomares Verfahren:
-
-    \vspace{1.5em}
-    \centering
-    \vspace{-0.5cm}
-    \begin{tikzpicture}[
-        node distance=0.5cm,
-        phase/.style={rectangle, rounded corners, text width=2cm, align=center, minimum height=1.6cm, draw=mDarkTeal, thick, fill=white, drop shadow},
-        arrow/.style={->, >=stealth, thick, color=mLightBrown}
-    ]
-        % Phase 1
-        \node[phase, fill=mRed!20] (p1) {
-            \textbf{\small 1. Initial}\\
-            \textbf{\small Access}\\[0.1cm]
-            \tiny Phishing\\RDP\\Exploits
+\begin{frame}{ENISA Threat Landscape 2024}
+  \begin{columns}
+    \begin{column}{0.4\textwidth}
+      \textbf{Top-Bedrohungen EU (Prime Threats):}
+      \begin{enumerate}
+        \item DDoS/RDoS (46,31\%)
+        \item \alert{Ransomware (27,33\%)}
+        \item Data Breaches (15,87\%)
+        \item Social Engineering (5,37\%)
+        \item Malware (2,45\%)
+        \item Zero-Day (0,11\%)
+      \end{enumerate}
+      \vspace{0.5em}
+      Ransomware: Zweitgrö{\ss}te Bedrohung
+    \end{column}
+    \begin{column}{0.6\textwidth}
+      \begin{tikzpicture}
+        \begin{axis}[
+          width=0.92\textwidth,
+          height=0.75\textheight,
+          xbar,
+          xlabel={Vorfälle (in Tausend)},
+          symbolic y coords={Zero-Day, Malware, Social Eng., Data, Ransomware, DDoS},
+          ytick=data,
+          nodes near coords,
+          nodes near coords align={horizontal},
+          xmin=0, xmax=2.8,
+          bar width=0.5cm,
+          ylabel near ticks,
+          xlabel near ticks
+        ]
+        \addplot[fill=chartcolor1] coordinates {
+          (0.01,Zero-Day)
+          (0.13,Malware)
+          (0.29,Social Eng.)
+          (0.84,Data)
+          (1.45,Ransomware)
+          (2.46,DDoS)
         };
-        
-        % Phase 2
-        \node[phase, fill=mLightBrown!20, right=of p1] (p2) {
-            \textbf{\small 2. Execution}\\[0.1cm]
-            \tiny Payload\\Download
-        };
-        
-        % Phase 3
-        \node[phase, fill=mBlue!20, right=of p2] (p3) {
-            \textbf{\small 3. Persistence}\\[0.1cm]
-            \tiny Lateral\\Movement
-        };
-        
-        % Phase 4
-        \node[phase, fill=mGray!30, right=of p3] (p4) {
-            \textbf{\small 4. Exfiltration}\\[0.1cm]
-            \tiny Datenklau
-        };
-        
-        % Phase 5
-        \node[phase, fill=mRed!40, right=of p4] (p5) {
-            \textbf{\small 5. Impact}\\[0.1cm]
-            \tiny Verschlüsselung
-        };
-        
-        \draw[arrow] (p1) -- (p2);
-        \draw[arrow] (p2) -- (p3);
-        \draw[arrow] (p3) -- (p4);
-        \draw[arrow] (p4) -- (p5);
-        
-        % Zeitangabe unten
-        \node[below=0.4cm of p3, font=\tiny, color=mGray, text width=10cm, align=center] {
-            Typische Dwell Time: 24-48 Stunden bis zur Verschlüsselung
-        };
-    \end{tikzpicture}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
 \end{frame}
 
-% =================================================================
-\section{Angriffsvektoren und Ziele}
-% =================================================================
+% Sektion 3: Ziele & Motivation
+\section{Ziele \& Motivation}
 
-\begin{frame}{Vektoren und Betroffene Sektoren}
-    \begin{columns}[T]
-        
-        % Linke Spalte: Vektoren
-        \column{0.48\textwidth}
-            \textbf{Häufigste Vektoren} \citeg{1, 4}
-            \begin{itemize}
-                \setlength\itemsep{0.5em}
-                \item \textbf{Phishing:} Dominanter Vektor (Mails \& Links)
-                \item \textbf{RDP:} Brute-Force auf Remote Desktop Protokolle
-                \item \textbf{Exploits:} Ausnutzung ungepatchter Software-Lücken
-                \item \textbf{Supply Chain:} Kompromittierung von Software-Updates
-            \end{itemize}
-            
-            \vspace{0.5cm}
-            
-            \textbf{Aktuelle Trends}
-            \begin{itemize}
-                \setlength\itemsep{0.5em}
-                \item \textbf{KI-Einsatz:} Nutzung für Phishing \& Evasion
-                \item \textbf{Rootkits:} Techniken zur Verschleierung
-            \end{itemize}
-
-        % Rechte Spalte: Sektoren
-        \column{0.48\textwidth}
-            \centering
-            \textbf{Top Ziele nach Sektoren \citeg{4}}
-            \vspace{0.2cm}
-            
-            \begin{tikzpicture}[
-                node distance=0.2cm,
-                boxstyle/.style={
-                    rectangle, 
-                    rounded corners, 
-                    minimum height=0.8cm, 
-                    text width=5.5cm,
-                    align=left, 
-                    inner sep=6pt,
-                    anchor=north
-                }
-            ]
-                % 1. Industrie
-                \node[boxstyle, fill=mDarkTeal, text=white] (ind) {
-                    \textbf{1. Industrie \& Fertigung}\\
-                    \footnotesize{Am häufigsten angegriffen (21,78\%)}
-                };
-
-                % 2. Transport
-                \node[boxstyle, fill=mDarkTeal!85, text=white, below=of ind] (trans) {
-                    \textbf{2. Transportsektor}\\
-                    \footnotesize{Zweithäufigstes Ziel (21,05\%)}
-                };
-
-                % 3. Kritische Infrastruktur
-                \node[boxstyle, fill=mDarkTeal!70, text=white, below=of trans] (kritis) {
-                    \textbf{3. Kritische Infrastrukturen}\\
-                    \footnotesize{Fokus auf Transport \& \textbf{Energie}}
-                };
-
-                % 4. Weitere Sektoren
-                \node[boxstyle, draw=mDarkTeal, fill=mLightGray!20, text=mDarkTeal, below=of kritis] (others) {
-                    \textbf{Weitere Hauptziele:}\\
-                    \footnotesize{
-                    $\bullet$ Öffentliche Verwaltung\\
-                    $\bullet$ Gesundheitswesen\\
-                    $\bullet$ Bankwesen \& Finanzen
-                    }
-                };
-            \end{tikzpicture}
-    \end{columns}
-\end{frame}
-
-% --- Demo Workflow ---
-\begin{frame}{Ablauf der Demonstration}
-    Wie die Komponenten im Test zusammenspielen:
-    
-    \vspace{1em}
-    
-    \begin{enumerate}
-        \item \textbf{Setup:} Starten des Python C2 Servers (Listener auf Port 4444).
-        \item \textbf{Infektion:} Ausführen der \texttt{rust-mw} Binary auf dem Zielsystem.
-        \item \textbf{Handshake:} Client meldet sich beim Server ("New Session").
-        \item \textbf{Angriff:} 
-            \begin{itemize}
-                \item API-Aufrufe
-                \item Datei-/Verzeichnisaktivität
-                \item Netzwerkverkehr
-                \item Entropie-Analyse
-            \end{itemize}
-
-        % Spalte 2: Analyse-Methoden
-        \column{0.55\textwidth}
-            \centering
-            \textbf{Analyseansätze} \citeg{1, 4}
-            \vspace{0.2cm}
-            \begin{tikzpicture}[
-                box/.style={rectangle, draw=none, rounded corners, text width=6cm, inner sep=8pt, align=left, drop shadow}
-            ]
-                % Statisch
-                \node[box, fill=mDarkTeal!15] (static) {
-                    \textbf{1. Statische Analyse}\\
-                    \footnotesize Untersuchung der Binärdatei \textit{ohne} Ausführung (Code-Struktur, Signaturen)
-                };
-                
-                % Dynamisch
-                \node[box, fill=mLightBrown!20, below=0.3cm of static] (dynamic) {
-                    \textbf{2. Dynamische Analyse}\\
-                    \footnotesize Beobachtung des Verhaltens in isolierter Umgebung (\textbf{Sandbox})
-                };
-                
-                % Hybrid
-                \node[box, fill=mBlue!15, below=0.3cm of dynamic] (hybrid) {
-                    \textbf{3. Hybrid-Ansatz}\\
-                    \footnotesize Kombination beider Methoden für optimale Erkennung
-                };
-            \end{tikzpicture}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Präventions- und Minderungsstrategien}
-    \footnotesize
-
-    \begin{columns}[T,onlytextwidth]
-
-        \column{0.32\textwidth}
-        \setbeamercolor{block title}{bg=mDarkTeal,fg=white}
-        \setbeamercolor{block body}{bg=mDarkTeal!90,fg=white}
-        \setlength{\parskip}{0.4em}
-        \begin{block}{Echtzeit-Schutz}
-            \vspace{0.3em}
-            \textbf{Ziel:} Identifizierung von Zero-Day-Ransomware
-
-            Systeme zur Erkennung und Unterbrechung von Angriffen
-            während der Ausführung
-            \vspace{0.3em}
-        \end{block}
-
-        \column{0.32\textwidth}
-        \setbeamercolor{block title}{bg=mLightBrown,fg=white}
-        \setbeamercolor{block body}{bg=mLightBrown!90,fg=white}
-        \setlength{\parskip}{0.4em}
-        \begin{block}{Abwehr}
-            \vspace{0.3em}
-            \textbf{Policies:} Strikte Dateizugriffsrichtlinien
-
-            \textbf{MTD:} \textit{Moving Target Defense}
-            (z.\,B. rotierende Dateiendungen)
-            \vspace{0.3em}
-        \end{block}
-
-        \column{0.32\textwidth}
-        \setbeamercolor{block title}{bg=gray,fg=white}
-        \setbeamercolor{block body}{bg=gray!85,fg=white}
-        \setlength{\parskip}{0.4em}
-        \begin{block}{Recovery}
-            \vspace{0.3em}
-            \textbf{Backups:} Cloud-Lösungen
-
-            \textbf{Hardware:} SSD Flash-Level Recovery
-
-            \textbf{Krypto:} Key-Escrow
-            \vspace{0.3em}
-        \end{block}
-
-    \end{columns}
-
-    \vspace{0.3em}
-    {\tiny Basierend auf Strategien aus \textit{Age of Ransomware} \citeg{1}}
-
-\end{frame}
-
-% =================================================================
-\section{REDFISH: Netzwerkbasierte Detektion}
-% =================================================================
-\begin{frame}{Netzwerkbasierte Detektion: REDFISH}
+\begin{frame}{Am häufigsten betroffene Sektoren}
+  \begin{columns}
+    \begin{column}{0.38\textwidth}
+      \textbf{Top 5 Sektoren:}
+      \begin{enumerate}
+        \item Manufacturing (21,78\%)
+        \item Retail (11,06\%)
+        \item ICT Services (9,18\%)
+        \item Business Services (7,14\%)
+        \item Banking/Finance (6,94\%)
+      \end{enumerate}
+      \vspace{0.5em}
+      \small{Industrie und Fertigung am stärksten betroffen}
+    \end{column}
+    \begin{column}{0.62\textwidth}
       \vspace{0.2cm}
-    \begin{columns}
-        \column{0.4\textwidth}
-            \textbf{Konzept} \citeg{2}
-            \vspace{0.1cm}
-            \begin{itemize}
-                \item Analyse von \textbf{SMB-Traffic} zu geteilten Laufwerken (NAS)
-                \item Keine Software auf Endgeräten nötig
-                \item Monitoring von \textbf{Verhaltensmustern}
-                \item Schnelles Lesen/Schreiben/Löschen
-            \end{itemize}
-            
-            \vspace{0.2cm}
-            \textbf{Vorteile:}
-            \begin{itemize}
-                \item Zentrale Überwachung
-                \item Keine Client-Installation
-                \item Früherkennung möglich
-            \end{itemize}
-
-        \column{0.6\textwidth}
-            \centering
-            \begin{tikzpicture}[
-                scale=0.85, transform shape,
-                flowbox/.style={rectangle, draw=mDarkTeal, thick, fill=white, rounded corners, text width=2.5cm, align=center, minimum height=1.2cm, drop shadow},
-                arrow/.style={->, >=stealth, thick, color=mLightBrown}
-            ]
-                % Ablauf
-                \node[flowbox] (monitor) {Traffic Analyse (SMB)};
-                \node[flowbox, right=0.5cm of monitor] (detect) {Anomalie-Erkennung};
-                \node[flowbox, right=0.5cm of detect, fill=mLightBrown!20] (action) {\textbf{Blockade} < 20 Sek.};
-                
-                \draw[arrow] (monitor) -- (detect);
-                \draw[arrow] (detect) -- (action);
-                
-                % Ergebnis-Box darunter
-                \node[rectangle, fill=mDarkTeal!10, draw=none, rounded corners, below=0.5cm of detect, text width=7cm, align=center, inner sep=8pt] {
-                    \textbf{Ergebnis:} 99\% Erkennung bevor 10 Dateien verloren gehen\\
-                    \vspace{0.1cm}
-                    \footnotesize \textit{„Near-0-Loss" Szenario: Wiederherstellung aus Netzwerk-Paketen möglich}
-                };
-            \end{tikzpicture}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{REDFISH: Architektur und Funktionsweise}
-    \centering
-    \begin{tikzpicture}[
-        node distance=1cm,
-        component/.style={rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm, align=center, draw=mDarkTeal, thick, fill=white, drop shadow},
-        arrow/.style={->, >=stealth, thick}
-    ]
-        % Endgeräte
-        \node[component, fill=mLightGray!30] (client1) {Client 1};
-        \node[component, fill=mLightGray!30, right=0.3cm of client1] (client2) {Client 2};
-        \node[component, fill=mLightGray!30, right=0.3cm of client2] (client3) {Client 3};
-        
-        % Netzwerk
-        \node[component, fill=mBlue!20, below=1.5cm of client2, minimum width=8cm] (network) {
-            \textbf{Netzwerk-Switch}\\
-            \footnotesize Mirror Port für Traffic-Analyse
-        };
-        
-        % REDFISH System
-        \node[component, fill=mLightBrown!30, below=1.5cm of network, minimum width=5cm, minimum height=1.5cm] (redfish) {
-            \textbf{REDFISH System}\\
-            \footnotesize 
-            $\bullet$ Pattern Recognition\\
-            $\bullet$ Anomaly Detection\\
-            $\bullet$ Alert Generation
-        };
-        
-        % NAS/Storage
-        \node[component, fill=mGreen!20, right=2cm of network] (nas) {
-            \textbf{NAS}\\
-            \footnotesize Shared\\Storage
-        };
-        
-        % Pfeile
-        \draw[arrow, mGray] (client1) -- (network);
-        \draw[arrow, mGray] (client2) -- (network);
-        \draw[arrow, mGray] (client3) -- (network);
-        \draw[arrow, mGray] (network) -- (nas);
-        \draw[arrow, mLightBrown, thick] (network) -- (redfish) node[midway, right, font=\tiny] {Mirror};
-        
-        % Alarm
-        \node[component, fill=mRed!30, left=2cm of redfish, minimum width=2cm] (alarm) {
-            \textbf{Alert}\\
-            \footnotesize Admin
-        };
-        \draw[arrow, mRed, very thick] (redfish) -- (alarm);
-    \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{REDFISH: Erkennungsmetriken}
-    \vspace{0.2cm}
-    \begin{columns}
-        \column{0.5\textwidth}
-            \textbf{Überwachte Parameter:}
-            \begin{itemize}
-                \item \textbf{Read Rate:} Datei-Lesezugriffe pro Zeiteinheit
-                \item \textbf{Write Rate:} Schreibvorgänge (verschlüsselte Daten)
-                \item \textbf{Delete Rate:} Löschung von Originaldateien
-                \item \textbf{Entropy:} Randomness der geschriebenen Daten
-            \end{itemize}
-            
-            \vspace{0.3cm}
-            \textbf{Schwellwerte:}
-            \begin{itemize}
-                \item Anpassbar pro Netzwerk
-                \item Machine Learning für Baseline
-                \item False Positive Rate: < 1\%
-            \end{itemize}
-
-        \column{0.5\textwidth}
-            \begin{tikzpicture}
-                \begin{axis}[
-                    width=\textwidth,
-                    height=6cm,
-                    xlabel={Zeit (Sekunden)},
-                    ylabel={Anzahl Operationen},
-                    legend pos=north west,
-                    ymajorgrids=true,
-                    grid style=dashed,
-                ]
-                    % Normal
-                    \addplot[color=mBlue, thick] coordinates {
-                        (0,2) (5,3) (10,2) (15,4) (20,3)
-                    };
-                    \addlegendentry{Ransomware}
-                    
-                    % Alarm Threshold
-                    \addplot[color=mLightBrown, thick, dotted] coordinates {
-                        (0,20) (20,20)
-                    };
-                    \addlegendentry{Alarm-Schwelle}
-                \end{axis}
-            \end{tikzpicture}
-    \end{columns}
-\end{frame}
-
-% =================================================================
-\section{Zero-Loss Recovery}
-% =================================================================
-
-\begin{frame}{Zero-Loss Recovery Konzept}
-    \textbf{Grundidee:} \citeg{2}
-    \begin{itemize}
-        \item Wiederherstellung von Dateien \textbf{bevor} sie dauerhaft verloren gehen
-        \item Nutzung von Netzwerk-Traffic für Rekonstruktion
-        \item Minimierung des Datenverlusts auf < 10 Dateien
-    \end{itemize}
-    
-    \vspace{0.5cm}
-    
-    \begin{center}
-    \begin{tikzpicture}[
-        node distance=0.8cm,
-        box/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, align=center, draw=mDarkTeal, thick, drop shadow}
-    ]
-        % Prozess
-        \node[box, fill=mLightGray!30] (detect) {1. Detektion\\< 20 Sek};
-        \node[box, fill=mLightBrown!20, right=of detect] (block) {2. Blockade\\Sofortig};
-        \node[box, fill=mBlue!20, right=of block] (capture) {3. Packet\\Capture};
-        \node[box, fill=mGreen!20, right=of capture] (restore) {4. Restore\\aus Packets};
-        
-        \draw[->, >=stealth, very thick, mDarkTeal] (detect) -- (block);
-        \draw[->, >=stealth, very thick, mDarkTeal] (block) -- (capture);
-        \draw[->, >=stealth, very thick, mDarkTeal] (capture) -- (restore);
-    \end{tikzpicture}
-    \end{center}
-    
-    \vspace{0.5cm}
-    
-    \begin{alertblock}{Kernvorteil}
-        Im Gegensatz zu traditionellen Backups: \textbf{Echtzeitwiederherstellung} ohne Zeitverzögerung oder Datenverlust
-    \end{alertblock}
-\end{frame}
-
-\begin{frame}{Vergleich: Traditionelle vs. Zero-Loss Recovery}
-    \begin{center}
-    \begin{tikzpicture}
+      \begin{tikzpicture}
         \begin{axis}[
-            ybar,
-            bar width=25pt,
-            width=0.9\textwidth,
-            height=5.5cm,
-            symbolic x coords={Traditionelles Backup, REDFISH Zero-Loss},
-            xtick=data,
-            ylabel={Verlorene Dateien},
-            ymin=0,
-            ymax=1200,
-            nodes near coords,
-            nodes near coords align={vertical},
-            legend pos=north west,
-            ymajorgrids=true,
-            grid style=dashed,
-            enlarge x limits=0.3
+          width=0.88\textwidth,
+          height=0.9\textheight,
+          xbar,
+          xlabel={Anteil (\%)},
+          symbolic y coords={Water, Energy, Public Admin, Transport, Education, Banking, Business, ICT, Other, Retail, Manufacturing},
+          ytick=data,
+          nodes near coords,
+          nodes near coords align={horizontal},
+          xmin=0, xmax=24,
+          bar width=0.35cm,
+          ylabel near ticks,
+          xlabel near ticks,
+          every node near coord/.append style={font=\tiny}
         ]
-            \addplot[fill=mRed!60] coordinates {
-                (Traditionelles Backup, 1000)
-                (REDFISH Zero-Loss, 8)
-            };
-            \addlegendentry{Durchschnittlicher Verlust}
+        \addplot[fill=chartcolor2] coordinates {
+          (0.37,Water)
+          (2.78,Energy)
+          (3.58,Public Admin)
+          (3.97,Transport)
+          (4.92,Education)
+          (6.94,Banking)
+          (7.14,Business)
+          (9.18,ICT)
+          (10.52,Other)
+          (11.06,Retail)
+          (21.78,Manufacturing)
+        };
         \end{axis}
-    \end{tikzpicture}
-    \end{center}
-    
-    \vspace{0.1cm}
-    
-    \begin{columns}[t]
-        \column{0.48\textwidth}
-            \textbf{Traditionell:}
-            \begin{itemize}
-                \item Backup-Intervall: Stunden/Tage
-                \item Wiederherstellung: Manuell
-                \item Datenverlust: Signifikant
-            \end{itemize}
-        
-        \column{0.48\textwidth}
-            \textbf{REDFISH:}
-            \begin{itemize}
-                \item Detektion: < 20 Sekunden
-                \item Wiederherstellung: Automatisch
-                \item Datenverlust: < 10 Dateien
-            \end{itemize}
-    \end{columns}
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
 \end{frame}
 
-% =================================================================
-\section{Praktische Implementierung}
-% =================================================================
-
-\begin{frame}{Deployment-Szenarien}
-    \begin{columns}
-        \column{0.5\textwidth}
-            \textbf{Enterprise-Umgebung:}
-            \begin{itemize}
-                \item Integration in bestehende SIEM-Systeme
-                \item Zentrale Überwachung aller Standorte
-                \item Skalierbar für große Netzwerke
-            \end{itemize}
-            
-            \vspace{0.5cm}
-            
-            \textbf{Anforderungen:}
-            \begin{itemize}
-                \item Mirror Port am Core Switch
-                \item Dedizierte Hardware für Analyse
-                \item Netzwerk-Bandbreite für Packet Capture
-            \end{itemize}
-
-        \column{0.5\textwidth}
-            \centering
-            \begin{tikzpicture}[scale=0.8, transform shape]
-                % Layers
-                \node[rectangle, draw=mDarkTeal, thick, fill=mLightGray!20, minimum width=6cm, minimum height=1cm] (siem) at (0,3) {SIEM Integration};
-                
-                \node[rectangle, draw=mDarkTeal, thick, fill=mLightBrown!20, minimum width=6cm, minimum height=1cm] (redfish) at (0,1.5) {REDFISH Engine};
-                
-                \node[rectangle, draw=mDarkTeal, thick, fill=mBlue!20, minimum width=6cm, minimum height=1cm] (network) at (0,0) {Network Layer};
-                
-                \node[rectangle, draw=mDarkTeal, thick, fill=mGreen!20, minimum width=6cm, minimum height=1cm] (storage) at (0,-1.5) {Storage/NAS};
-                
-                % Connections
-                \draw[->, >=stealth, thick] (storage) -- (network);
-                \draw[->, >=stealth, thick] (network) -- (redfish);
-                \draw[->, >=stealth, thick] (redfish) -- (siem);
-            \end{tikzpicture}
-    \end{columns}
+\begin{frame}{Motivation der Angreifer}
+  \textbf{Warum diese Ziele?}
+  \begin{itemize}
+    \item \textbf{Finanzielle Motive}: Zahlungsbereitschaft bei kritischen Systemen
+    \item \textbf{Kritische Infrastrukturen}: Hoher Druck durch Ausfallkosten
+    \item \textbf{Sensible Daten}: Erpressungspotenzial durch Datenleaks
+    \item \textbf{Geopolitische Faktoren}: Destabilisierung und Spionage
+  \end{itemize}
+  
+  \vspace{0.5em}
+  
+  \alert{Zunehmende Professionalisierung und Organisation}
 \end{frame}
 
-\begin{frame}{Performance und Evaluierung}
-    \textbf{Testumgebung:} \citeg{2}
+% Sektion 4: Arten von Ransomware
+\section{Arten von Ransomware}
+
+\begin{frame}{Ransomware Taxonomy}
+  % Wir definieren einen gemeinsamen Stil für beide Bäume
+  \tikzset{
+    mybox/.style={
+      font=\scriptsize\sffamily\bfseries,
+      draw=gray, line width=0.8pt, inner sep=3pt, rounded corners=2pt, align=center
+    },
+    greenbox/.style={mybox, fill=green!30!gray!40, text width=2.2cm, minimum height=1cm},
+    bluebox/.style={mybox, rectangle, rounded corners=0, fill=cyan!20, text width=2.2cm, font=\scriptsize\sffamily}
+  }
+
+  % Zeile 1: Die ersten 3 Kategorien
+  \centering
+  \resizebox{0.95\textwidth}{!}{%
+    \begin{forest}
+      for tree={edge={draw, gray}, s sep=0.3cm, l sep=0.5cm}
+      [, phantom, forked edges % Unsichtbare Wurzel
+        [Types, greenbox, for children={folder, grow'=0} [Crypto, bluebox][Locker, bluebox][Scareware, bluebox]]
+        [Targets, greenbox, for children={folder, grow'=0} [Platforms, bluebox][Industries, bluebox]]
+        [Infection vectors, greenbox, for children={folder, grow'=0} [Windows RDP, bluebox][Phishing, bluebox][Software vuln., bluebox]]
+      ]
+    \end{forest}
+  }
+
+  \vspace{0.5cm} % Abstand zwischen den Zeilen
+
+  % Zeile 2: Die restlichen 3 Kategorien
+  \resizebox{0.95\textwidth}{!}{%
+    \begin{forest}
+      for tree={edge={draw, gray}, s sep=0.3cm, l sep=0.5cm}
+      [, phantom, forked edges
+        [Comm. with C\&C, greenbox, for children={folder, grow'=0} [Hard-coded IP, bluebox][DGA, bluebox]]
+        [Access to enc. key, greenbox, for children={folder, grow'=0} [Hard-coded binary, bluebox][Via C\&C, bluebox]]
+        [Malicious action, greenbox, for children={folder, grow'=0} [Encryption, bluebox][Locking, bluebox]]
+      ]
+    \end{forest}
+  }
+\end{frame}
+
+\begin{frame}{Grundlegende Typen}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \textbf{1. Crypto-Ransomware}
+      \begin{itemize}
+        \item Verschlüsselt Benutzerdateien
+        \item Verwendet AES, RSA
+        \item System bleibt funktional
+        \item Wiederherstellung oft unmöglich
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{2. Locker-Ransomware}
+      \begin{itemize}
+        \item Sperrt Systemzugriff
+        \item Bildschirmsperre
+        \item Keine Datenverschlüsselung
+        \item Einfacher zu beheben
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Moderne Erpressungsformen}
+  \textbf{Evolution der Angriffsmethoden:}
+  
+  \begin{itemize}
+    \item \textbf{Leakware/Doxware}: Drohung mit Veröffentlichung sensibler Daten
+    
+    \item \textbf{Double Extortion}: 
     \begin{itemize}
-        \item 1000 Dateien verschiedener Typen
-        \item 10 verschiedene Ransomware-Varianten
-        \item Reale Netzwerk-Bedingungen
+      \item Verschlüsselung \textit{und} Datenexfiltration
+      \item Doppelter Zahlungsdruck
     \end{itemize}
     
-    \vspace{0.5cm}
-    
-    \begin{center}
-    \begin{tikzpicture}
-        \begin{axis}[
-            width=0.7\textwidth,
-            height=5cm,
-            xlabel={Ransomware Variante},
-            ylabel={Erkennungsrate (\%)},
-            ymin=95, ymax=100,
-            xtick={1,2,3,4,5,6,7,8,9,10},
-            ymajorgrids=true,
-            grid style=dashed,
-            legend pos=south east
-        ]
-            \addplot[color=mGreen, mark=*, thick] coordinates {
-                (1,99.2) (2,99.5) (3,98.9) (4,99.8) (5,99.1)
-                (6,99.4) (7,98.7) (8,99.6) (9,99.3) (10,99.0)
-            };
-            \addlegendentry{REDFISH}
-        \end{axis}
-    \end{tikzpicture}
-    \end{center}
-    
-    \textbf{Durchschnittliche Erkennungsrate: 99.25\%}
-\end{frame}
-
-% =================================================================
-\section{Zukunftsperspektiven}
-% =================================================================
-
-\begin{frame}{Herausforderungen und offene Fragen}
-    \begin{columns}[t]
-        \column{0.48\textwidth}
-            \textbf{Technische Herausforderungen:}
-            \begin{itemize}
-                \item \textbf{Verschlüsselter Traffic:} TLS/SSL erschwert Analyse
-                \item \textbf{Skalierung:} Große Netzwerke mit hohem Throughput
-                \item \textbf{Performance:} Echtzeit-Analyse bei hoher Last
-                \item \textbf{False Positives:} Legitime Massenoperationen
-            \end{itemize}
-
-        \column{0.48\textwidth}
-            \textbf{Forschungsrichtungen:}
-            \begin{itemize}
-                \item \textbf{KI-Integration:} Verbesserte Mustererkennung
-                \item \textbf{Cloud-Adaption:} Schutz für Cloud-Storage
-                \item \textbf{IoT-Schutz:} Erweiterung auf IoT-Netzwerke
-                \item \textbf{Automatisierung:} Selbstlernende Systeme
-            \end{itemize}
-    \end{columns}
-    
-    \vspace{0.8cm}
-    
-    \begin{alertblock}{Wichtig}
-        Ransomware entwickelt sich ständig weiter - Detektionssysteme müssen adaptiv sein
-    \end{alertblock}
-\end{frame}
-
-\begin{frame}{Ausblick: Die Zukunft der Ransomware-Abwehr}
-    \centering
-    \begin{tikzpicture}[
-        node distance=0.4cm,
-        future/.style={rectangle, rounded corners, text width=4cm, minimum height=2.5cm, align=center, draw=mDarkTeal, thick, fill=white, drop shadow}
-    ]
-        \node[future, fill=mBlue!20] (ai) {
-            \textbf{KI \& ML}\\
-            \vspace{0.2cm}
-            \footnotesize
-            Adaptive Erkennung\\
-            Predictive Analytics\\
-            Automated Response
-        };
-        
-        \node[future, fill=mGreen!20, right=of ai] (zero) {
-            \textbf{Zero Trust}\\
-            \vspace{0.2cm}
-            \footnotesize
-            Micro-Segmentation\\
-            Least Privilege\\
-            Continuous Verification
-        };
-        
-        \node[future, fill=mLightBrown!20, right=of zero] (quantum) {
-            \textbf{Quantum-Ready}\\
-            \vspace{0.2cm}
-            \footnotesize
-            Post-Quantum Crypto\\
-            Quantum Detection\\
-            Future-Proof Security
-        };
-    \end{tikzpicture}
-    
-    \vspace{0.8cm}
-    
-    \textbf{Kernbotschaft:}
+    \item \textbf{Triple Extortion}:
     \begin{itemize}
-        \item Defense in Depth bleibt essentiell
-        \item Kombination aus Prävention, Detektion und Recovery
-        \item Kontinuierliche Anpassung an neue Bedrohungen
+      \item Zusätzliche Drohung gegen Kunden/Partner
+      \item DDoS-Angriffe als dritte Ebene
+    \end{itemize}
+    
+    \item \textbf{Ransomware-as-a-Service (RaaS)}:
+    \begin{itemize}
+      \item Mietmodell für Cyberkriminelle
+      \item Keine technischen Kenntnisse erforderlich
+      \item Demokratisierung der Cyberkriminalität
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Wichtige RaaS-Varianten}
+  \begin{description}
+    \item[LockBit]: Globale Dominanz, schnelle Verschlüsselung, hochprofessionell
+    \item[Maze]: Pionier der Double-Extortion-Methode
+    \item[Ryuk]: Gezielter gegen Gro{\ss}unternehmen
+  \end{description}
+\end{frame}
+
+% Sektion 5: Die Phasen eines Angriffs
+\section{Die Phasen eines Angriffs}
+
+\begin{frame}{Ransomware Kill Chain: Überblick}
+ %  
+ %  \begin{enumerate}
+ %    \item \textbf{Infection (Infektion)}: Ransomware wird auf das Opfersystem geliefert (Phishing, Software-Schwachstellen).
+ %    \item \textbf{C\&C/C2 Communiaction}: Nach der Infektion kontaktiert die Malware den Command-and-Control Server um Informationen auszutauschen.
+ %    \item \textbf{Destruction Zerstörung}: Die eigentliche bösartige Aktion wird durchgeführt (Verschlüsselung, Sperrung des Systemzugriffs).
+ %    \item \textbf{Extortion (Erpressung)}: Dem Opfer wird eine Lösegeldforderung gezeigt, die Anweisungen für die Zahlung enthält (typischerw. Kryptowährungen).
+
+
+ %  \end{enumerate}
+ %  
+ %  \vspace{0.5em}
+ %  
+  \begin{figure}
+    \includegraphics[width=\textwidth]{images/attack_phases_overview.png}
+    \caption{Die vier Phasen eines Ransomware-Angriffs}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Phase 1-2: Distribution \& Infection}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \textbf{Distribution - Angriffsvektoren:}
+      \begin{itemize}
+        \item \textbf{Phishing-E-Mails} (häufigster Vektor)
+        \begin{itemize}
+          \item Bösartige Anhänge
+          \item Manipulierte Links
+        \end{itemize}
+        \item Remote Desktop Protocol (RDP)
+        \begin{itemize}
+          \item Brute-Force-Angriffe
+          \item Gestohlene Credentials
+        \end{itemize}
+        \item Software-Schwachstellen
+        \begin{itemize}
+          \item Ungepatchte Systeme
+          \item Zero-Day-Exploits
+        \end{itemize}
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Infection:}
+      \begin{itemize}
+        \item Installation der Malware
+        \item Ausführung des Schadcodes
+        \item Umgehung von Sicherheitsmechanismen
+        \item Moderne Techniken:
+        \begin{itemize}
+          \item Rootkit-Technologien
+          \item Verzögerte Ausführung
+        \end{itemize}
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Phase 3-4: Staging \& Scanning}
+  \textbf{Staging - Etablierung im System:}
+  \begin{itemize}
+    \item Persistenzmechanismen (Registry, Autostart)
+    \item Aufbau der Command \& Control (C2) Kommunikation
+    \item Lateral Movement im Netzwerk
+    \item Rechteerweiterung (Privilege Escalation)
+  \end{itemize}
+  
+  \vspace{0.5em}
+  
+  \textbf{Scanning - Zielerkennung:}
+  \begin{itemize}
+    \item Durchsuchen lokaler Laufwerke
+    \item Identifikation von Netzwerkfreigaben
+    \item Cloud-Speicher-Erkennung
+    \item Priorisierung wertvoller Daten
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}{Phase 5-6: Encryption \& Payment}
+    \textbf{Encryption:}
+    \begin{itemize}
+      \item Starke Verschlüsselung (AES, RSA)
+      \item Hybride Verschlüsselungsverfahren
+      \item Schnelle Verarbeitung
+      \item Löschung von Backups/Schattenkopien
+    \end{itemize}
+      
+      \vspace{0.5em}
+      
+    \textbf{Payment:}
+    \begin{itemize}
+      \item Anzeige der Lösegeldforderung
+      \item Zahlungsanweisungen (Kryptowährung)
+      \item Zeitlimit mit Preiserhöhung
+      \item Drohung mit Datenlöschung/-veröffentlichung
     \end{itemize}
 \end{frame}
 
-% =================================================================
-\section{Zusammenfassung}
-% =================================================================
-
-\begin{frame}{Key Takeaways}
-    \begin{enumerate}
-        \item \textbf{Bedrohungslage:} Ransomware ist eine der größten Cyber-Bedrohungen mit massiven finanziellen Auswirkungen
-        
-        \item \textbf{Evolution:} Von einfacher Dateiverschlüsselung zu komplexen Multi-Extortion-Strategien
-        
-        \item \textbf{Detektion:} ML-basierte Ansätze zeigen hohe Erfolgsraten (> 99\%)
-        
-        \item \textbf{REDFISH:} Netzwerkbasierte Detektion ermöglicht Near-Zero-Loss Recovery
-        
-        \item \textbf{Zukunft:} Integration von KI, Zero Trust und Quantum-Readiness notwendig
-    \end{enumerate}
-    
-    \vspace{0.5cm}
-    
-    \begin{block}{Fazit}
-        Ein mehrschichtiger Sicherheitsansatz kombiniert mit modernen Detektionssystemen wie REDFISH bietet den besten Schutz gegen Ransomware
-    \end{block}
+\begin{frame}{Moderne Entwicklungen in Angriffstechniken}
+  \textbf{KI-gestützte Angriffe:}
+  \begin{itemize}
+    \item KI-generierte Phishing-Kampagnen
+    \item Umgehung von ML-basierten Detektionssystemen
+    \item Automatisierte Zielerkennung und -priorisierung
+  \end{itemize}
+  
+  \vspace{0.5em}
+  
+  \textbf{Weitere Trends:}
+  \begin{itemize}
+    \item Rootkit-Fashion: Tiefere Systemintegration
+    \item Wiper-Ransomware: Zerstörung statt Verschlüsselung
+    \item Supply-Chain-Angriffe über vertrauenswürdige Software
+  \end{itemize}
+  
+  \vspace{0.5em}
+  
+  \begin{figure}
+    % \includegraphics[width=0.7\textwidth]{modern_techniques}
+    \caption{Evolution der Angriffstechniken}
+  \end{figure}
 \end{frame}
 
-% =================================================================
-\section*{Quellenverzeichnis}
-% =================================================================
+% Sektion 6: Gegenmaßnahmen
+\section{Gegenma{\ss}nahmen}
 
-\begin{frame}[allowframebreaks]{Referenzen}
-    \setbeamertemplate{bibliography item}[text]
-    
-    \begin{thebibliography}{9}
-        
-        \bibitem{1}
-        \textbf{Razaulla et al.}
-        \newblock \textit{The Age of Ransomware: A Survey on the Evolution, Taxonomy, and Research Directions} (2023)
-
-        \bibitem{2}
-        \textbf{Morato et al.}
-        \newblock \textit{Ransomware early detection by the analysis of file sharing traffic (REDFISH)}.
-        \newblock Journal of Network and Computer Applications, 2018.
-
-        \bibitem{3}
-        \textbf{Oz et al.}
-        \newblock \textit{A Survey on Ransomware: Evolution, Taxonomy, and Defense Solutions}.
-        \newblock ACM Computing Surveys, 2022.
-
-        \bibitem{4}
-        \textbf{ENISA}
-        \newblock \textit{ENISA Threat Landscape 2024}.
-        \newblock European Union Agency for Cybersecurity, 2024.
-
-    \end{thebibliography}
+\begin{frame}{Prävention}
+  \textbf{Technische Ma{\ss}nahmen:}
+  \begin{itemize}
+    \item \textbf{Backups}: 3-2-1-Regel (3 Kopien, 2 Medien, 1 Offsite)
+    \item \textbf{Patch-Management}: Regelmä{\ss}ige Updates und Schwachstellenbeseitigung
+    \item \textbf{Netzwerksegmentierung}: Begrenzung der lateralen Bewegung
+    \item \textbf{Access Control}: Least Privilege Prinzip, MFA
+  \end{itemize}
+  
+  \vspace{0.5em}
+  
+  \textbf{Organisatorische Ma{\ss}nahmen:}
+  \begin{itemize}
+    \item Security Awareness Training
+    \item Incident Response Pläne
+    \item Regelmä{\ss}ige Sicherheitsaudits
+  \end{itemize}
 \end{frame}
 
-\begin{frame}[standout]
-    Vielen Dank für Ihre Aufmerksamkeit!
-    \vspace{0.5cm}
-    
-    \normalsize
-    \vspace{2em}
+\begin{frame}{Detektion und Reaktion}
+  \textbf{Detektionsansätze:}
+  \begin{itemize}
+    \item \textbf{Statische Analyse}: Untersuchung ohne Ausführung
+    \item \textbf{Dynamische Analyse}: Verhaltensbeobachtung in Sandbox
+    \item \textbf{Machine Learning}: Erkennung unbekannter Varianten
+    \item \textbf{Netzwerkbasierte Detektion}: Anomalie-Erkennung im Traffic
+  \end{itemize}
+  
+  \vspace{0.5em}
+  
+  \textbf{Wichtige Merkmale:}
+  \begin{itemize}
+    \item API-Aufrufe und Systemverhalten
+    \item Datei-/Verzeichnisaktivitäten
+    \item Netzwerkverkehrsmuster
+    \item Verschlüsselungsoperationen
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Incident Response}
+  \textbf{Sofortma{\ss}nahmen bei Verdacht:}
+  \begin{enumerate}
+    \item \alert{Isolation} betroffener Systeme
+    \item Identifikation des Ransomware-Stamms
+    \item Bewertung der Schadenausbreitung
+    \item Benachrichtigung relevanter Stellen
+  \end{enumerate}
+  
+  \vspace{0.3em}
+  
+  \textbf{Wiederherstellung:}
+  \begin{itemize}
+    \item Wiederherstellung aus Backups (wenn möglich)
+    \item Key-Escrow-Mechanismen
+    \item Forensische Analyse
+    \item Systemhärtung vor Wiederinbetriebnahme
+  \end{itemize}
+  
+  \vspace{0.5em}
+  
+  \alert{Zahlungsempfehlung}: Keine Lösegeldzahlung (keine Garantie, finanziert weitere Angriffe)
+\end{frame}
+
+% Sektion 7: Forschung & Ausblick
+\section{Forschung \& Ausblick}
+
+\begin{frame}{Aktuelle Forschungslandschaft}
+  \textbf{Fokusgebiete:}
+  \begin{itemize}
+    \item \textbf{72,8\%} der Studien: Ransomware-Detektion
+    \item Machine Learning dominiert als Detektionsmethode
+    \item Hohe Genauigkeit bei unbekannten Varianten
+  \end{itemize}
+  
+  \vspace{0.5em}
+  
+  \textbf{Innovative Ansätze:}
+  \begin{itemize}
+    \item \textbf{REDFISH}: Netzwerkbasierte Früherkennung
     \begin{itemize}
-        \item[\checkmark] \textbf{Bedrohung:} Ransomware professionalisiert sich (RaaS, C2).
-        \item[\checkmark] \textbf{Technik:} Rust + Sockets ermöglichen potente Malware.
-        \item[\checkmark] \textbf{Schutz:} Defense-in-Depth ist alternativlos.
+      \item Monitoring von SMB-Protokoll
+      \item Erkennung von Verhaltensmustern (schnelles Lesen/Schreiben/Löschen)
+      \item \alert{99\% Erkennung vor Verlust von 10 Dateien}
     \end{itemize}
+    \item Near-Zero-Loss-Szenario durch Traffic-Wiederherstellung
+    \item Moving Target Defense (MTD)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Zero-Loss Recovery: REDFISH}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \textbf{Funktionsweise:}
+      \begin{itemize}
+        \item Analyse des Netzwerk-Traffics zu Freigaben
+        \item Erkennung anomaler Zugriffsmuster
+        \item Aufzeichnung der Dateiinhalte
+        \item Automatische Alarmierung
+      \end{itemize}
+      
+      \vspace{0.5em}
+      
+      \textbf{Vorteile:}
+      \begin{itemize}
+        \item Früherkennung (99\% bei <10 Dateien)
+        \item Wiederherstellung ohne Backups
+        \item Minimaler Datenverlust
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{figure}
+        % \includegraphics[width=\textwidth]{redfish_system}
+        \caption{REDFISH Architektur}
+      \end{figure}
+      
+      \vspace{0.5em}
+      
+      \begin{figure}
+        % \includegraphics[width=\textwidth]{detection_rate}
+        \caption{Erkennungsrate vs. Datenverlust}
+      \end{figure}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Zukünftige Herausforderungen}
+  \textbf{Technologische Entwicklungen:}
+  \begin{itemize}
+    \item \textbf{KI in Ransomware}: Adaptives, intelligentes Verhalten
+    \item \textbf{Quantencomputing}: Bedrohung für aktuelle Verschlüsselung
+    \item \textbf{IoT-Ransomware}: Neue Angriffsflächen
+    \item \textbf{Cloud-native Ransomware}: Angriffe auf Cloud-Infrastrukturen
+  \end{itemize}
+  
+  \vspace{0.5em}
+  
+  \textbf{Forschungsbedarf:}
+  \begin{itemize}
+    \item Echtzeit-Schutz und Zero-Day-Erkennung
+    \item Post-Quantum-Kryptographie
+    \item Automatisierte Incident Response
+    \item Internationale Zusammenarbeit bei Strafverfolgung
+  \end{itemize}
+\end{frame}
+
+% Sektion 8: Fazit
+\section{Fazit}
+
+\begin{frame}{Zusammenfassung}
+  \textbf{Kernaussagen:}
+  \begin{itemize}
+    \item Ransomware bleibt eine der grö{\ss}ten Cyberbedrohungen
+    \item Kontinuierliche Evolution der Angriffsmethoden (RaaS, Multi-Extortion)
+    \item Kritische Infrastrukturen besonders gefährdet
+    \item \alert{Prävention ist der beste Schutz}
+  \end{itemize}
+  
+  \vspace{0.5em}
+  
+  \textbf{Handlungsempfehlungen:}
+  \begin{itemize}
+    \item Mehrschichtige Sicherheitsarchitektur
+    \item Regelmä{\ss}ige Backups und Tests
+    \item Kontinuierliche Schulung der Mitarbeiter
+    \item Investition in moderne Detektionssysteme
+    \item Vorbereitung von Incident Response Plänen
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Quellen}
+  \begin{thebibliography}{99}
+    \bibitem{age} \textit{The Age of Ransomware: A Survey on the Evolution, Taxonomy, and Research Directions} (Razulla et al.)
+    \bibitem{enisa} ENISA (2024): \textit{Threat Landscape Report 2024} (European Union Agency for Cybersecurity)
+    \bibitem{redfish} \textit{Ransomware early detection by the analysis of file sharing traffic (REDFISH)} (Morato et al.)
+    \bibitem{presentation} \textit{A Survey on Ransomware: Evolution, Taxonomy, and Defense Solutions} (Oz et al.)
+  \end{thebibliography}
 \end{frame}
 
 \end{document}
