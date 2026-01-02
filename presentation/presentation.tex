@@ -12,6 +12,24 @@
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepackage[edges]{forest}
+\usetikzlibrary{shapes,arrows,positioning,fit,backgrounds}
+\usepackage{tcolorbox}
+\newtcolorbox{demobox}[1]{
+  colback=white,
+  colframe=darkaccent,         % Rahmenfarbe
+  coltext=darkaccent,               % Textfarbe: Weiß
+  title=\textbf{#1},           % Titel fett
+  coltitle=orange,             % Titelfarbe: Orange
+  fonttitle=\sffamily,         % Titel-Schrift: Normal (Sans-Serif)
+  fontupper=\sffamily\small,   % Text-Schrift: Normal (Sans-Serif) & klein
+  arc=0pt,                     % Eckige Kanten
+  boxsep=0pt,
+  toptitle=2pt,
+  bottomtitle=2pt,
+  outer arc=0pt,
+  boxrule=1pt,                 % Kein Rand
+  left=10pt, right=10pt, top=2pt, bottom=8pt % Etwas mehr Innenabstand für Text
+}
 
 % Farbschema
 \definecolor{darkaccent}{RGB}{35,55,75}
@@ -21,6 +39,11 @@
 \definecolor{chartcolor4}{RGB}{241,196,15}
 \definecolor{chartcolor5}{RGB}{155,89,182}
 \definecolor{chartcolor6}{RGB}{230,126,34}
+
+% Custom Colors für Projekt-Verweise
+\definecolor{rustcolor}{RGB}{183,65,14}
+\setbeamercolor{block title example}{fg=white, bg=rustcolor}
+\setbeamercolor{block body example}{bg=rustcolor!10}
 
 \setbeamercolor{frametitle}{bg=darkaccent}
 \setbeamercolor{progress bar}{fg=orange,bg=gray}
@@ -59,7 +82,12 @@
     \end{column}
     \begin{column}{0.5\textwidth}
       \begin{figure}
-        \includegraphics[width=\textwidth]{images/historical_timeline.png}
+        % Placeholder für Bild
+        \centering
+        \begin{figure}
+          \includegraphics[width=\textwidth]{images/historical_timeline.png}
+          \caption{Entwicklung von Ransomware über die Jahre}
+        \end{figure}
         \caption{Entwicklung von Ransomware über die Jahre}
       \end{figure}
     \end{column}
@@ -113,10 +141,10 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}{ENISA Threat Landscape 2024}
+\begin{frame}{ENISA Threat Landscape 2024: Prime Threats}
   \begin{columns}
     \begin{column}{0.4\textwidth}
-      \textbf{Top-Bedrohungen EU (Prime Threats):}
+      \textbf{Top-Bedrohungen EU:}
       \begin{enumerate}
         \item DDoS/RDoS (46,31\%)
         \item \alert{Ransomware (27,33\%)}
@@ -126,12 +154,12 @@
         \item Zero-Day (0,11\%)
       \end{enumerate}
       \vspace{0.5em}
-      Ransomware: Zweitgrö{\ss}te Bedrohung
+      Ransomware: Zweitgrößte Bedrohung
     \end{column}
     \begin{column}{0.6\textwidth}
       \begin{tikzpicture}
         \begin{axis}[
-          width=0.92\textwidth,
+          width=0.9\textwidth,
           height=0.75\textheight,
           xbar,
           xlabel={Vorfälle (in Tausend)},
@@ -163,7 +191,7 @@
 
 \begin{frame}{Am häufigsten betroffene Sektoren}
   \begin{columns}
-    \begin{column}{0.38\textwidth}
+    \begin{column}{0.4\textwidth}
       \textbf{Top 5 Sektoren:}
       \begin{enumerate}
         \item Manufacturing (21,78\%)
@@ -175,11 +203,10 @@
       \vspace{0.5em}
       \small{Industrie und Fertigung am stärksten betroffen}
     \end{column}
-    \begin{column}{0.62\textwidth}
-      \vspace{0.2cm}
+    \begin{column}{0.6\textwidth}
       \begin{tikzpicture}
         \begin{axis}[
-          width=0.88\textwidth,
+          width=0.9\textwidth,
           height=0.9\textheight,
           xbar,
           xlabel={Anteil (\%)},
@@ -188,10 +215,10 @@
           nodes near coords,
           nodes near coords align={horizontal},
           xmin=0, xmax=24,
-          bar width=0.35cm,
+          bar width=0.3cm,
           ylabel near ticks,
           xlabel near ticks,
-          every node near coord/.append style={font=\tiny}
+          every node near coord/.append style={font=\scriptsize}
         ]
         \addplot[fill=chartcolor2] coordinates {
           (0.37,Water)
@@ -266,6 +293,11 @@
       ]
     \end{forest}
   }
+  
+  \begin{exampleblock}{Projekt-Einblick: Edu-Ransomware}
+    \vspace{0.2cm}
+    Unsere entwickelte Ransomware ist eine klassische \textbf{Crypto-Ransomware} mit Elementen der \textbf{Double Extortion} (Datenexfiltration vor Verschlüsselung).
+  \end{exampleblock}
 \end{frame}
 
 \begin{frame}{Grundlegende Typen}
@@ -291,187 +323,207 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}{Moderne Erpressungsformen}
-  \textbf{Evolution der Angriffsmethoden:}
+% ==========================================================
+% NEUE SEKTION: TECHNISCHE IMPLEMENTIERUNG
+% ==========================================================
+\section{Case Study: Edu-Ransomware Architektur}
+
+\begin{frame}{Technische Übersicht}
+  Um die Theroie besser verständlich zu machen, haben wir eine Simulation enwickelt.
   
-  \begin{itemize}
-    \item \textbf{Leakware/Doxware}: Drohung mit Veröffentlichung sensibler Daten
-    
-    \item \textbf{Double Extortion}: 
-    \begin{itemize}
-      \item Verschlüsselung \textit{und} Datenexfiltration
-      \item Doppelter Zahlungsdruck
-    \end{itemize}
-    
-    \item \textbf{Triple Extortion}:
-    \begin{itemize}
-      \item Zusätzliche Drohung gegen Kunden/Partner
-      \item DDoS-Angriffe als dritte Ebene
-    \end{itemize}
-    
-    \item \textbf{Ransomware-as-a-Service (RaaS)}:
-    \begin{itemize}
-      \item Mietmodell für Cyberkriminelle
-      \item Keine technischen Kenntnisse erforderlich
-      \item Demokratisierung der Cyberkriminalität
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Wichtige RaaS-Varianten}
-  \begin{description}
-    \item[LockBit]: Globale Dominanz, schnelle Verschlüsselung, hochprofessionell
-    \item[Maze]: Pionier der Double-Extortion-Methode
-    \item[Ryuk]: Gezielter gegen Gro{\ss}unternehmen
-  \end{description}
-\end{frame}
-
-% Sektion 5: Die Phasen eines Angriffs
-\section{Die Phasen eines Angriffs}
-
-\begin{frame}{Ransomware Kill Chain: Überblick}
- %  
- %  \begin{enumerate}
- %    \item \textbf{Infection (Infektion)}: Ransomware wird auf das Opfersystem geliefert (Phishing, Software-Schwachstellen).
- %    \item \textbf{C\&C/C2 Communiaction}: Nach der Infektion kontaktiert die Malware den Command-and-Control Server um Informationen auszutauschen.
- %    \item \textbf{Destruction Zerstörung}: Die eigentliche bösartige Aktion wird durchgeführt (Verschlüsselung, Sperrung des Systemzugriffs).
- %    \item \textbf{Extortion (Erpressung)}: Dem Opfer wird eine Lösegeldforderung gezeigt, die Anweisungen für die Zahlung enthält (typischerw. Kryptowährungen).
-
-
- %  \end{enumerate}
- %  
- %  \vspace{0.5em}
- %  
-  \begin{figure}
-    \includegraphics[width=\textwidth]{images/attack_phases_overview.png}
-    \caption{Die vier Phasen eines Ransomware-Angriffs}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Phase 1-2: Distribution \& Infection}
+  \vspace{1em}
   \begin{columns}
     \begin{column}{0.5\textwidth}
-      \textbf{Distribution - Angriffsvektoren:}
-      \begin{itemize}
-        \item \textbf{Phishing-E-Mails} (häufigster Vektor)
+        \textbf{Komponente A: Agent (Victim)}
         \begin{itemize}
-          \item Bösartige Anhänge
-          \item Manipulierte Links
+            \item Sprache: \textbf{Rust} (High Performance, Memory Safety)
+            \item Cross-Platform (Windows/Linux/macOS)
+            \item Features: AES-256 Verschlüsselung, Sandbox-Evasion, Persistenz
         \end{itemize}
-        \item Remote Desktop Protocol (RDP)
-        \begin{itemize}
-          \item Brute-Force-Angriffe
-          \item Gestohlene Credentials
-        \end{itemize}
-        \item Software-Schwachstellen
-        \begin{itemize}
-          \item Ungepatchte Systeme
-          \item Zero-Day-Exploits
-        \end{itemize}
-      \end{itemize}
     \end{column}
     \begin{column}{0.5\textwidth}
-      \textbf{Infection:}
-      \begin{itemize}
-        \item Installation der Malware
-        \item Ausführung des Schadcodes
-        \item Umgehung von Sicherheitsmechanismen
-        \item Moderne Techniken:
+        \textbf{Komponente B: C2-Server (Attacker)}
         \begin{itemize}
-          \item Rootkit-Technologien
-          \item Verzögerte Ausführung
+            \item Sprache: \textbf{Python}
+            \item Multi-Threaded TCP Server
+            \item Steuerung, Exfiltration (Data Theft), Key-Management
         \end{itemize}
-      \end{itemize}
     \end{column}
   \end{columns}
 \end{frame}
 
-\begin{frame}{Phase 3-4: Staging \& Scanning}
-  \textbf{Staging - Etablierung im System:}
-  \begin{itemize}
-    \item Persistenzmechanismen (Registry, Autostart)
-    \item Aufbau der Command \& Control (C2) Kommunikation
-    \item Lateral Movement im Netzwerk
-    \item Rechteerweiterung (Privilege Escalation)
-  \end{itemize}
-  
-  \vspace{0.5em}
-  
-  \textbf{Scanning - Zielerkennung:}
-  \begin{itemize}
-    \item Durchsuchen lokaler Laufwerke
-    \item Identifikation von Netzwerkfreigaben
-    \item Cloud-Speicher-Erkennung
-    \item Priorisierung wertvoller Daten
-  \end{itemize}
-  
-\end{frame}
+\begin{frame}{Modulare Architektur (Agent)}
+  \vspace{-0.5em}
+  Der Rust-Agent bildet die Kill-Chain durch isolierte, spezialisierte Module ab:
+  \vspace{1em}
 
-\begin{frame}{Phase 5-6: Encryption \& Payment}
-    \textbf{Encryption:}
-    \begin{itemize}
-      \item Starke Verschlüsselung (AES, RSA)
-      \item Hybride Verschlüsselungsverfahren
-      \item Schnelle Verarbeitung
-      \item Löschung von Backups/Schattenkopien
-    \end{itemize}
+  \begin{columns}[t]
+    % LINKE SPALTE
+    \begin{column}{0.48\textwidth}
+      \begin{block}{1. Defense Evasion (\texttt{evasion.rs})}
+        \footnotesize
+        \begin{itemize}
+            \item \textbf{Sandbox-Erkennung:} Prüft RAM (<3GB) und CPU-Cores (<2).
+            \item \textbf{Reaktion:} Sofortiger Prozessabbruch zur Tarnung vor Analysten.
+        \end{itemize}
+      \end{block}
       
       \vspace{0.5em}
       
-    \textbf{Payment:}
+      \begin{block}{3. Impact Engine (\texttt{crypto.rs})}
+        \footnotesize
+        \begin{itemize}
+            \item \textbf{Algorithmus:} AES-256-CTR (Stream Cipher).
+            \item \textbf{Atomic Operations:} Rename zu \texttt{.locked} verhindert Datenverlust bei Absturz.
+        \end{itemize}
+      \end{block}
+    \end{column}
+
+    % RECHTE SPALTE
+    \begin{column}{0.48\textwidth}
+      \begin{block}{2. C2 Channel (\texttt{network.rs})}
+        \footnotesize
+        \begin{itemize}
+            \item \textbf{Protokoll:} TCP-Loop mit Retry-Logik.
+            \item \textbf{Commands:} Parsing von \texttt{shell}, \texttt{exfil}, \texttt{encrypt}.
+        \end{itemize}
+      \end{block}
+      
+      \vspace{0.5em}
+      
+      \begin{block}{4. Extortion Logic (\texttt{extortion.rs})}
+        \footnotesize
+        \begin{itemize}
+            \item \textbf{User Notification:} Ersetzt "Panic Mode".
+            \item \textbf{Mechanismus:} Browser-Loop öffnet Lösegeldforderung alle 5s (Psychologischer Druck).
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Delivery Infrastruktur}
+    \textbf{Intelligente Verteilung:}
     \begin{itemize}
-      \item Anzeige der Lösegeldforderung
-      \item Zahlungsanweisungen (Kryptowährung)
-      \item Zeitlimit mit Preiserhöhung
-      \item Drohung mit Datenlöschung/-veröffentlichung
+        \item Python-basierter Webserver als Delivery-Point.
+        \item \textbf{Smart Endpoint:} Erkennt Betriebssystem des Opfers via User-Agent Header.
+        \item Liefert automatisch passendes Binary (`.exe` für Windows, Elf für Linux).
+    \end{itemize}
+    
+    \vspace{0.5em}
+    \textbf{Infektionsvektoren:}
+    \begin{itemize}
+        \item \textbf{Phishing PDF:} Verschwommene Rechnung mit Fake-Sicherheitshinweis.
+        \item \textbf{Drive-by-Download:} Fake-Webseiten (Gaming, Gewinnspiel, Sicherheitswarnung).
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Moderne Entwicklungen in Angriffstechniken}
-  \textbf{KI-gestützte Angriffe:}
+% ==========================================================
+% SEKTION 5: PHASEN EINES ANGRIFFS (MIT DEMO)
+% ==========================================================
+\section{Die Phasen eines Angriffs}
+
+\begin{frame}{Phase 1: Distribution \& Infection}
+  \textbf{Theorie:}
   \begin{itemize}
-    \item KI-generierte Phishing-Kampagnen
-    \item Umgehung von ML-basierten Detektionssystemen
-    \item Automatisierte Zielerkennung und -priorisierung
+    \item Phishing (E-Mail Anhänge, Links)
+    \item Drive-by-Downloads
   \end{itemize}
   
-  \vspace{0.5em}
+  \vspace{1em}
   
-  \textbf{Weitere Trends:}
-  \begin{itemize}
-    \item Rootkit-Fashion: Tiefere Systemintegration
-    \item Wiper-Ransomware: Zerstörung statt Verschlüsselung
-    \item Supply-Chain-Angriffe über vertrauenswürdige Software
-  \end{itemize}
+  \begin{demobox}{Live Demo: Initial Access Szenario}
+    \textbf{Szenario:} Ein Mitarbeiter erhält eine E-Mail mit dem Anhang "Rechnung\_Dez.pdf".
+    
+    \begin{itemize}
+        \item \textbf{Der Köder:} Das PDF enthält ein unscharfes Bild, das wie eine echte Rechnung aussieht.
+        \item \textbf{Der Trick:} Ein Button "Inhalt entschlüsseln" suggeriert ein technisches Problem (Social Engineering).
+        \item \textbf{Das Ergebnis:} Beim Klick liefert der Smart-Server die Malware aus und infiziert das System.
+    \end{itemize}
+  \end{demobox}
   
-  \vspace{0.5em}
-  
-  \begin{figure}
-    % \includegraphics[width=0.7\textwidth]{modern_techniques}
-    \caption{Evolution der Angriffstechniken}
-  \end{figure}
 \end{frame}
+
+\begin{frame}{Phase 2: Execution \& Evasion}
+
+  \textbf{Theorie:} Ransomware installiert sich, prüft auf Sandboxes und etabliert Persistenz.
+  
+  \vspace{0.3em}
+  
+  \begin{demobox}{Projekt-Einblick: Evasion Module}
+    Der Agent prüft beim Start:
+    \begin{itemize}
+        \item Ist RAM < 3GB?
+        \item Sind weniger als 2 CPU-Kerne verfügbar?
+    \end{itemize}
+    Falls ja: \alert{Sofortiger Abbruch} mit gefälschter Fehlermeldung, um Analysten zu täuschen.
+  \end{demobox}
+\end{frame}
+
+\begin{frame}{Phase 3: C2 \& Exfiltration}
+  \textbf{Theorie:} Aufbau der Kommunikation, Nachladen von Befehlen, Datendiebstahl.
+  
+  \vspace{0.5em}
+  
+  \begin{demobox}{Live Demo: Attacker Control}
+    Wir wechseln zum Angreifer-Terminal (C2):
+    \begin{itemize}
+        \item \texttt{[+] New Victim Connected: ID 1}
+        \item Angreifer nutzt \texttt{shell}-Befehle zur Erkundung (`ls`, `ps`).
+        \item \textbf{Double Extortion:} Befehl \texttt{exfil secret.pdf} stiehlt Daten vor der Verschlüsselung.
+    \end{itemize}
+  \end{demobox}
+\end{frame}
+
+\begin{frame}{Phase 4: Encryption (Impact)}
+    \textbf{Theorie:} Starke Verschlüsselung, Löschung von Backups.
+      
+    \vspace{0.5em}
+      
+    \begin{demobox}{Live Demo: The Panic Mode}
+      Angreifer sendet \texttt{encrypt}. Auswirkungen auf Opfer-PC:
+      \begin{itemize}
+        \item Dateien erhalten Endung \texttt{.locked}.
+        \item \textbf{Visuell:} Browser öffnet die Lösegeldforderung (Stress-Erzeugung).
+        \item Log-File zeigt Verschlüsselungsprozess in Echtzeit.
+      \end{itemize}
+    \end{demobox}
+\end{frame}
+
+\begin{frame}{Phase 5: Decryption (Recovery)}
+    \textbf{Szenario:} Das Lösegeld wurde gezahlt (in der Simulation).
+    
+    \vspace{1em}
+    \begin{itemize}
+        \item Angreifer sendet Befehl \texttt{decrypt}.
+        \item Agent nutzt den symmetrischen Key (AES-CTR), um Dateien wiederherzustellen.
+        \item \texttt{.locked} Dateien verschwinden, Originale sind wieder da.
+    \end{itemize}
+\end{frame}
+
 
 % Sektion 6: Gegenmaßnahmen
 \section{Gegenma{\ss}nahmen}
 
-\begin{frame}{Prävention}
+\begin{frame}{Prävention \& Detektion}
   \textbf{Technische Ma{\ss}nahmen:}
   \begin{itemize}
-    \item \textbf{Backups}: 3-2-1-Regel (3 Kopien, 2 Medien, 1 Offsite)
-    \item \textbf{Patch-Management}: Regelmä{\ss}ige Updates und Schwachstellenbeseitigung
-    \item \textbf{Netzwerksegmentierung}: Begrenzung der lateralen Bewegung
-    \item \textbf{Access Control}: Least Privilege Prinzip, MFA
+    \item \textbf{Backups}: 3-2-1-Regel
+    \item \textbf{EDR / Antivirus}: Verhaltensanalyse
   \end{itemize}
   
   \vspace{0.5em}
   
-  \textbf{Organisatorische Ma{\ss}nahmen:}
-  \begin{itemize}
-    \item Security Awareness Training
-    \item Incident Response Pläne
-    \item Regelmä{\ss}ige Sicherheitsaudits
-  \end{itemize}
+  \begin{exampleblock}{Projekt-Reflektion: Warum Evasion?}
+    \vspace{0.1cm}
+    Herkömmliche AV-Systeme scannen oft statisch.
+    Unsere Ransomware umgeht dies durch:
+    \begin{itemize}
+        \item Dynamisches Nachladen (keine Signatur beim Download des PDF).
+        \item Sandbox-Checks (verhindert Analyse in der Cloud).
+        \item Nutzung seltener Sprachen (Rust binaries sind oft schwerer zu analysieren als C++).
+    \end{itemize}
+  \end{exampleblock}
 \end{frame}
 
 \begin{frame}{Detektion und Reaktion}
@@ -483,7 +535,7 @@
     \item \textbf{Netzwerkbasierte Detektion}: Anomalie-Erkennung im Traffic
   \end{itemize}
   
-  \vspace{0.5em}
+  \vspace{0.3em}
   
   \textbf{Wichtige Merkmale:}
   \begin{itemize}
@@ -513,14 +565,14 @@
     \item Systemhärtung vor Wiederinbetriebnahme
   \end{itemize}
   
-  \vspace{0.5em}
+  \vspace{0.3em}
   
   \alert{Zahlungsempfehlung}: Keine Lösegeldzahlung (keine Garantie, finanziert weitere Angriffe)
 \end{frame}
 
 % Sektion 7: Forschung & Ausblick
 \section{Forschung \& Ausblick}
-
+% Inhalte bleiben gleich (REDFISH, Zero-Loss Recovery, etc.)
 \begin{frame}{Aktuelle Forschungslandschaft}
   \textbf{Fokusgebiete:}
   \begin{itemize}
@@ -545,39 +597,37 @@
 \end{frame}
 
 \begin{frame}{Zero-Loss Recovery: REDFISH}
-  \begin{columns}
-    \begin{column}{0.5\textwidth}
-      \textbf{Funktionsweise:}
-      \begin{itemize}
-        \item Analyse des Netzwerk-Traffics zu Freigaben
-        \item Erkennung anomaler Zugriffsmuster
-        \item Aufzeichnung der Dateiinhalte
-        \item Automatische Alarmierung
-      \end{itemize}
-      
-      \vspace{0.5em}
-      
-      \textbf{Vorteile:}
-      \begin{itemize}
-        \item Früherkennung (99\% bei <10 Dateien)
-        \item Wiederherstellung ohne Backups
-        \item Minimaler Datenverlust
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \begin{figure}
-        % \includegraphics[width=\textwidth]{redfish_system}
-        \caption{REDFISH Architektur}
-      \end{figure}
-      
-      \vspace{0.5em}
-      
-      \begin{figure}
-        % \includegraphics[width=\textwidth]{detection_rate}
-        \caption{Erkennungsrate vs. Datenverlust}
-      \end{figure}
-    \end{column}
-  \end{columns}
+  \textbf{Funktionsweise:}
+  \begin{itemize}
+    \item Analyse des Netzwerk-Traffics zu Freigaben
+    \item Erkennung anomaler Zugriffsmuster
+    \item Aufzeichnung der Dateiinhalte
+    \item Automatische Alarmierung
+  \end{itemize}
+  
+  \vspace{0.5em}
+  
+  \textbf{Vorteile:}
+  \begin{itemize}
+    \item Früherkennung (99\% bei <10 Dateien)
+    \item Wiederherstellung ohne Backups
+    \item Minimaler Datenverlust
+  \end{itemize}
+\end{frame}
+
+% Sektion 8: Fazit
+\section{Fazit}
+
+\begin{frame}{Zusammenfassung}
+  \textbf{Takeaways aus der Simulation:}
+  \begin{itemize}
+    \item Angriffe sind heute hochgradig automatisiert (Delivery Server).
+    \item Social Engineering (PDF) ist oft effektiver als technische Exploits.
+    \item Ransomware ist nicht nur Verschlüsselung, sondern auch Datendiebstahl.
+  \end{itemize}
+  
+  \vspace{0.5em}
+  \alert{Prävention und Awareness sind der beste Schutz.}
 \end{frame}
 
 \begin{frame}{Zukünftige Herausforderungen}
@@ -600,36 +650,12 @@
   \end{itemize}
 \end{frame}
 
-% Sektion 8: Fazit
-\section{Fazit}
-
-\begin{frame}{Zusammenfassung}
-  \textbf{Kernaussagen:}
-  \begin{itemize}
-    \item Ransomware bleibt eine der grö{\ss}ten Cyberbedrohungen
-    \item Kontinuierliche Evolution der Angriffsmethoden (RaaS, Multi-Extortion)
-    \item Kritische Infrastrukturen besonders gefährdet
-    \item \alert{Prävention ist der beste Schutz}
-  \end{itemize}
-  
-  \vspace{0.5em}
-  
-  \textbf{Handlungsempfehlungen:}
-  \begin{itemize}
-    \item Mehrschichtige Sicherheitsarchitektur
-    \item Regelmä{\ss}ige Backups und Tests
-    \item Kontinuierliche Schulung der Mitarbeiter
-    \item Investition in moderne Detektionssysteme
-    \item Vorbereitung von Incident Response Plänen
-  \end{itemize}
-\end{frame}
 
 \begin{frame}{Quellen}
   \begin{thebibliography}{99}
     \bibitem{age} \textit{The Age of Ransomware: A Survey on the Evolution, Taxonomy, and Research Directions} (Razulla et al.)
-    \bibitem{enisa} ENISA (2024): \textit{Threat Landscape Report 2024} (European Union Agency for Cybersecurity)
-    \bibitem{redfish} \textit{Ransomware early detection by the analysis of file sharing traffic (REDFISH)} (Morato et al.)
-    \bibitem{presentation} \textit{A Survey on Ransomware: Evolution, Taxonomy, and Defense Solutions} (Oz et al.)
+    \bibitem{enisa} ENISA (2024): \textit{Threat Landscape Report 2024}
+    \bibitem{project} \textit{Edu-Ransomware Repository} (GitHub, 2026) - Eigene Entwicklung
   \end{thebibliography}
 \end{frame}
 
