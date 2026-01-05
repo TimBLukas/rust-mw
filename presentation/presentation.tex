@@ -253,6 +253,52 @@
   \alert{Zunehmende Professionalisierung und Organisation}
 \end{frame}
 
+% Ramsomware as a buisness
+
+\begin{frame}{Warum die Bedrohung bleibt: Die Ökonomie}
+  \textbf{Ransomware-as-a-Service (RaaS)} ist eine hochprofessionelle Schattenwirtschaft mit Milliardenumsätzen. Die Arbeitsteilung ähnelt legalen Konzernen:
+  \vspace{0.5em}
+
+  \begin{columns}[t]
+    \begin{column}{0.33\textwidth}
+      \begin{block}{1. Access Provider}
+        \scriptsize
+        Spezialisten ("Türöffner"), die Zugänge zu Netzwerken potenzieller Opfer verkaufen.
+      \end{block}
+    \end{column}
+    \begin{column}{0.33\textwidth}
+      \begin{block}{2. RaaS Provider}
+        \scriptsize
+        Entwickler der Malware. Bieten Schadsoftware, C2-Infrastruktur und Verhandlungssupport gegen Miete/Provision an.
+      \end{block}
+    \end{column}
+    \begin{column}{0.33\textwidth}
+      \begin{block}{3. Affiliates}
+        \scriptsize
+        Kaufen Zugänge, mieten die Malware und führen den eigentlichen Angriff beim Opfer durch.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Professionalisierungsgrad: Beispiel LockBit}
+  Die Qualität der Services übertrifft teilweise legale SaaS-Anbieter.
+  
+  \vspace{0.5em}
+  
+  \begin{demobox}{Beispiel: LockBit 3.0 Bug-Bounty}
+    LockBit hat ein eigenes Prämienprogramm für Hinweise zur Verbesserung ihrer Schadsoftware aufgelegt:
+    \vspace{0.3em}
+    \\
+    \textit{"Locker Bugs: Any errors during encryption ... that lead to corrupted files or to the possibility of decrypting files without getting a decryptor."}
+  \end{demobox}
+
+  \vspace{0.5em}
+  \textbf{Wirtschaftliches Risiko:}
+  Im Gegensatz zu Banken ("Too big to fail") gilt für Ransomware-Gruppen: \textbf{"Too big to prevail"}. Wer zu groß wird, zieht zu viel Aufmerksamkeit der Strafverfolger auf sich.
+\end{frame}
+
+
 % Sektion 4: Arten von Ransomware
 \section{Arten von Ransomware}
 
@@ -653,6 +699,7 @@
 
 \begin{frame}{Quellen}
   \begin{thebibliography}{99}
+    \bibitem{hammann} IT-Security Vorlesung, Matthias Hammann, WS24/25.
     \bibitem{age} \textit{The Age of Ransomware: A Survey on the Evolution, Taxonomy, and Research Directions} (Razulla et al.)
     \bibitem{enisa} ENISA (2024): \textit{Threat Landscape Report 2024}
     \bibitem{project} \textit{Edu-Ransomware Repository} (GitHub, 2026) - Eigene Entwicklung
