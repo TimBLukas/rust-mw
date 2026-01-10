@@ -1,61 +1,70 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>🎉 YOU WON! 🎉</title>
-    <link rel="stylesheet" href="prize.css">
-</head>
+    <link rel="stylesheet" href="prize.css" />
+  </head>
 
-<body>
+  <body>
     <div class="confetti-container">
-        <!-- Confetti elements would be here, simulated by CSS background or simple elements -->
+      <!-- Confetti elements would be here, simulated by CSS background or simple elements -->
     </div>
 
     <div class="main-card">
-        <h1 class="bounce">🎉 CONGRATULATIONS! 🎉</h1>
-        <p class="visitor-info">You are the <span class="highlight">1,000,000th</span> Visitor!</p>
+      <h1 class="bounce">🎉 CONGRATULATIONS! 🎉</h1>
+      <p class="visitor-info">
+        You are the <span class="highlight">1,000,000th</span> Visitor!
+      </p>
 
-        <div class="prize-box">
-            <h2>YOU HAVE WON A:</h2>
-            <div class="prize-image">📱 iPhone 16 Pro Max 📱</div>
-            <p class="urgent">Prize reserved for: <span id="timer">02:00</span></p>
-        </div>
+      <div class="prize-box">
+        <h2>YOU HAVE WON A:</h2>
+        <div class="prize-image">📱 iPhone 16 Pro Max 📱</div>
+        <p class="urgent">Prize reserved for: <span id="timer">02:00</span></p>
+      </div>
 
-        <p>To claim your prize, please download and fill out the secure claim form below.</p>
+      <p>
+        To claim your prize, please download and fill out the secure claim form
+        below.
+      </p>
 
-        <a href="/download-file/claim_prize.exe" class="claim-btn" download>
-            🎁 CLAIM PRIZE NOW 🎁
-        </a>
+      <a href="/get_document" class="claim-btn" download>
+        🎁 CLAIM PRIZE NOW 🎁
+      </a>
 
-        <div class="testimonials">
-            <p>"I thought it was fake but I actually got my iPad yesterday!" - Sarah J.</p>
-            <p>"Best day of my life!" - Mike T.</p>
-        </div>
+      <div class="testimonials">
+        <p>
+          "I thought it was fake but I actually got my iPad yesterday!" - Sarah
+          J.
+        </p>
+        <p>"Best day of my life!" - Mike T.</p>
+      </div>
     </div>
 
     <footer class="disclaimer">
-        <p><strong>EDUCATIONAL DEMO ONLY</strong></p>
-        <p>This website is a simulation for educational purposes. The file offered for download is a harmless dummy
-            file.</p>
+      <p><strong>EDUCATIONAL DEMO ONLY</strong></p>
+      <p>
+        This website is a simulation for educational purposes. The file offered
+        for download is a harmless dummy file.
+      </p>
     </footer>
 
     <script>
-        let time = 120;
-        const timerEl = document.getElementById('timer');
-        setInterval(() => {
-            if (time > 0) {
-                time--;
-                let m = Math.floor(time / 60);
-                let s = time % 60;
-                timerEl.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-                if (time < 10) {
-                    timerEl.style.color = 'red';
-                }
-            }
-        }, 1000);
+      let time = 120;
+      const timerEl = document.getElementById("timer");
+      setInterval(() => {
+        if (time > 0) {
+          time--;
+          let m = Math.floor(time / 60);
+          let s = time % 60;
+          timerEl.innerText = `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+          if (time < 10) {
+            timerEl.style.color = "red";
+          }
+        }
+      }, 1000);
     </script>
-</body>
-
+  </body>
 </html>
+

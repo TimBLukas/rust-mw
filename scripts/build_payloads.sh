@@ -10,7 +10,8 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 AGENT_DIR="$ROOT_DIR/malware_agent"
 DELIVERY_DIR="$ROOT_DIR/delivery/DbD-Site"
 FILES_DIR="$DELIVERY_DIR/files"

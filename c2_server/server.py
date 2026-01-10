@@ -92,7 +92,6 @@ def handle_client(
 
                 print("C2>", end="", flush=True)
 
-
     except Exception as e:
         print(f"[!] Fehler mit client ID {cid}: {e}")
 
