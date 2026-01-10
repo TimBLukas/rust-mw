@@ -1,0 +1,30 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#3b82f6', 'primaryTextColor': '#ffffff', 'primaryBorderColor': '#1e40af', 'lineColor': '#475569', 'fontSize': '18px'}, 'flowchart': {'nodeSpacing': 30, 'rankSpacing': 50}}}%%
+
+flowchart LR
+    subgraph DELIVERY["Delivery"]
+        PDF["PDF Generator"]
+        DBD["DbD Server :3000"]
+        PAY["Payloads"]
+    end
+
+    subgraph AGENT["Rust Agent"]
+        RUST["main.rs\ncrypto.rs\nnetwork.rs\nevasion.rs"]
+    end
+
+    subgraph INFRA["Infrastructure"]
+        C2["C2 Server :4444"]
+        LOOT["Loot Storage"]
+    end
+
+    PDF --> DBD --> PAY
+    PAY -->|"download"| AGENT
+    AGENT <-->|"TCP"| C2
+    AGENT -.->|"exfil"| LOOT
+
+    classDef delivery fill:#22c55e,stroke:#15803d,color:#fff,stroke-width:3px
+    classDef rust fill:#b45309,stroke:#92400e,color:#fff,stroke-width:3px
+    classDef infra fill:#3b82f6,stroke:#1d4ed8,color:#fff,stroke-width:3px
+
+    class PDF,DBD,PAY delivery
+    class RUST rust
+    class C2,LOOT infra

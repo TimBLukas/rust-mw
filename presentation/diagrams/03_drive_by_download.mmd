@@ -1,0 +1,15 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#3b82f6', 'actorBkg': '#3b82f6', 'actorTextColor': '#fff', 'actorBorder': '#1d4ed8', 'signalColor': '#1e293b', 'noteBkgColor': '#fef3c7', 'noteTextColor': '#1e293b', 'fontSize': '16px'}, 'sequence': {'actorFontSize': 18, 'messageFontSize': 16, 'noteFontSize': 14}}}%%
+
+sequenceDiagram
+    participant V as Browser
+    participant S as DbD Server
+    participant P as Payloads
+
+    V->>S: GET /game
+    S-->>V: Fake Website
+    V->>S: GET /get_document
+    Note over S: User-Agent Check
+    S->>P: OS-Payload laden
+    P-->>S: Binary
+    S-->>V: Download
+    V->>V: Ausführen

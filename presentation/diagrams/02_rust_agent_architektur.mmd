@@ -1,0 +1,25 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#3b82f6', 'primaryTextColor': '#ffffff', 'lineColor': '#475569', 'fontSize': '20px'}, 'flowchart': {'nodeSpacing': 25, 'rankSpacing': 40}}}%%
+
+flowchart LR
+    MAIN["main.rs\nEntry Point"] --> EVASION["evasion.rs\nSandbox Check"]
+    EVASION -->|"OK"| PERSIST["persistence.rs\nAutostart"]
+    EVASION -.->|"FAIL"| EXIT["Exit"]
+    PERSIST --> NETWORK["network.rs\nC2 Loop"]
+    NETWORK --> CRYPTO["crypto.rs\nAES-256"]
+    CRYPTO --> EXTORT["extortion.rs\nRansom Note"]
+
+    classDef main fill:#0f172a,stroke:#020617,color:#fff,stroke-width:3px
+    classDef evasion fill:#8b5cf6,stroke:#6d28d9,color:#fff,stroke-width:3px
+    classDef persist fill:#06b6d4,stroke:#0369a1,color:#fff,stroke-width:3px
+    classDef network fill:#3b82f6,stroke:#1d4ed8,color:#fff,stroke-width:3px
+    classDef crypto fill:#ef4444,stroke:#b91c1c,color:#fff,stroke-width:3px
+    classDef extort fill:#f97316,stroke:#c2410c,color:#fff,stroke-width:3px
+    classDef exit fill:#64748b,stroke:#334155,color:#fff,stroke-width:3px
+
+    class MAIN main
+    class EVASION evasion
+    class PERSIST persist
+    class NETWORK network
+    class CRYPTO crypto
+    class EXTORT extort
+    class EXIT exit

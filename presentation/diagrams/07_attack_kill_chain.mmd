@@ -1,0 +1,28 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#3b82f6', 'primaryTextColor': '#ffffff', 'lineColor': '#475569', 'fontSize': '20px'}, 'flowchart': {'nodeSpacing': 20, 'rankSpacing': 30}}}%%
+
+flowchart LR
+    D["1. DELIVERY\nPhishing/DbD"] ==> E["2. EXECUTION\nPayload"]
+    E ==> EV["3. EVASION\nVM Check"]
+    EV ==> P["4. PERSISTENCE\nAutostart"]
+    P ==> C2["5. C2\nReverse Shell"]
+    C2 ==> EX["6. EXFIL\nData Theft"]
+    EX ==> EN["7. ENCRYPT\nAES-256"]
+    EN ==> XT["8. EXTORT\nRansom"]
+
+    classDef p1 fill:#f97316,stroke:#c2410c,color:#fff,stroke-width:3px
+    classDef p2 fill:#eab308,stroke:#ca8a04,color:#000,stroke-width:3px
+    classDef p3 fill:#8b5cf6,stroke:#6d28d9,color:#fff,stroke-width:3px
+    classDef p4 fill:#06b6d4,stroke:#0369a1,color:#fff,stroke-width:3px
+    classDef p5 fill:#3b82f6,stroke:#1d4ed8,color:#fff,stroke-width:3px
+    classDef p6 fill:#f97316,stroke:#c2410c,color:#fff,stroke-width:3px
+    classDef p7 fill:#ef4444,stroke:#b91c1c,color:#fff,stroke-width:3px
+    classDef p8 fill:#0f172a,stroke:#020617,color:#fff,stroke-width:3px
+
+    class D p1
+    class E p2
+    class EV p3
+    class P p4
+    class C2 p5
+    class EX p6
+    class EN p7
+    class XT p8

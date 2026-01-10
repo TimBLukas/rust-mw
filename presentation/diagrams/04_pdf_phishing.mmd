@@ -1,0 +1,18 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#3b82f6', 'primaryTextColor': '#ffffff', 'lineColor': '#475569', 'fontSize': '18px'}, 'flowchart': {'nodeSpacing': 30, 'rankSpacing': 50}}}%%
+
+flowchart LR
+    GEN["PDF Generator\nPillow + FPDF"] --> CREATE["Fake Invoice\n+ Blur + Overlay"]
+    CREATE --> PDF["Rechnung.pdf"]
+    PDF --> OPEN["Opfer öffnet PDF"]
+    OPEN --> CLICK["Klickt auf Link"]
+    CLICK --> DOWN["Malware Download"]
+
+    classDef gen fill:#3b82f6,stroke:#1d4ed8,color:#fff,stroke-width:3px
+    classDef create fill:#06b6d4,stroke:#0369a1,color:#fff,stroke-width:3px
+    classDef pdf fill:#22c55e,stroke:#15803d,color:#fff,stroke-width:3px
+    classDef victim fill:#ef4444,stroke:#b91c1c,color:#fff,stroke-width:3px
+
+    class GEN gen
+    class CREATE create
+    class PDF pdf
+    class OPEN,CLICK,DOWN victim
