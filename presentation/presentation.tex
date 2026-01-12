@@ -182,42 +182,11 @@
 % AGENDA
 % ============================================================
 \begin{frame}{Agenda}
-  \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
-      \tableofcontents[sections={1-4}]
-    \end{column}
-    \begin{column}{0.48\textwidth}
-      \tableofcontents[sections={5-8}]
-    \end{column}
-  \end{columns}
+  \tableofcontents
 \end{frame}
 
 % ============================================================
-% SEKTION 1: ENTWICKLUNG & GESCHICHTE
-% ============================================================
-\section{Entwicklung \& Geschichte}
-
-\begin{frame}{Historischer Abriss}
-  \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
-      \textbf{Meilensteine:}
-      \begin{itemize}
-        \item \textbf{1989}: AIDS Trojan – erster dokumentierter Ransomware-Angriff
-        \item \textbf{2005}: Wiederaufleben durch Internet und Kryptowährungen
-        \item \textbf{2017}: WannaCry-Ausbruch mit globaler Aufmerksamkeit
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \begin{figure}
-        \centering
-        \includegraphics[width=\textwidth]{images/historical_timeline.png}
-      \end{figure}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% ============================================================
-% SEKTION 2: AKTUELLE BEDROHUNGSLAGE
+% SEKTION 1: AKTUELLE BEDROHUNGSLAGE
 % ============================================================
 \section{Aktuelle Bedrohungslage}
 
@@ -302,50 +271,9 @@
 \end{frame}
 
 % ============================================================
-% SEKTION 3: ZIELE & MOTIVATION
+% SEKTION 2: ZIELE & MOTIVATION
 % ============================================================
 \section{Ziele \& Motivation}
-
-\begin{frame}{Am häufigsten betroffene Sektoren}
-  \begin{columns}[T]
-    \begin{column}{0.35\textwidth}
-      \textbf{Top 5 Sektoren:}
-      \begin{enumerate}
-        \item Manufacturing (21,78\%)
-        \item Retail (11,06\%)
-        \item ICT Services (9,18\%)
-        \item Business Services (7,14\%)
-        \item Banking/Finance (6,94\%)
-      \end{enumerate}
-      
-      \vspace{0.3em}
-      \small Industrie und Fertigung am stärksten betroffen
-    \end{column}
-    \begin{column}{0.62\textwidth}
-      \begin{tikzpicture}
-        \begin{axis}[
-          width=\textwidth,
-          height=0.75\textheight,
-          xbar,
-          xlabel={\footnotesize Anteil (\%)},
-          symbolic y coords={Water, Energy, Public Admin, Transport, Education, Banking, Business, ICT, Other, Retail, Manufacturing},
-          ytick=data,
-          nodes near coords,
-          nodes near coords style={font=\tiny},
-          xmin=0, xmax=25,
-          bar width=0.25cm,
-          y tick label style={font=\tiny},
-          x tick label style={font=\scriptsize},
-          enlarge y limits=0.05,
-        ]
-        \addplot[fill=chartcolor2,draw=chartcolor2!80!black] coordinates {
-          (0.37,Water)(2.78,Energy)(3.58,Public Admin)(3.97,Transport)(4.92,Education)(6.94,Banking)(7.14,Business)(9.18,ICT)(10.52,Other)(11.06,Retail)(21.78,Manufacturing)
-        };
-        \end{axis}
-      \end{tikzpicture}
-    \end{column}
-  \end{columns}
-\end{frame}
 
 \begin{frame}{Motivation der Angreifer}
   \textbf{Warum diese Ziele?}
@@ -428,7 +356,7 @@
 \end{frame}
 
 % ============================================================
-% SEKTION 4: ARTEN VON RANSOMWARE
+% SEKTION 3: ARTEN VON RANSOMWARE
 % ============================================================
 \section{Arten von Ransomware}
 
@@ -500,113 +428,29 @@
 \end{frame}
 
 % ============================================================
-% SEKTION: CASE STUDY
+% SEKTION: CASE STUDY EINFÜHRUNG
 % ============================================================
-\section{Case Study: Edu-Ransomware Architektur}
+\section{Case Study: Edu-Ransomware}
 
-\begin{frame}{Technische Übersicht}
-  Um die Theorie besser verständlich zu machen, haben wir eine Simulation entwickelt.
-  
-  \vspace{0.5em}
-  \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
-      \begin{block}{Komponente A: Agent (Victim)}
-        \footnotesize
-        \begin{itemize}
-          \item Sprache: \textbf{Rust} (High Performance)
-          \item Cross-Platform (Win/Linux/macOS)
-          \item AES-256, Sandbox-Evasion, Persistenz
-        \end{itemize}
-      \end{block}
-    \end{column}
-    \begin{column}{0.48\textwidth}
-      \begin{block}{Komponente B: C2-Server (Attacker)}
-        \footnotesize
-        \begin{itemize}
-          \item Sprache: \textbf{Python}
-          \item Multi-Threaded TCP Server
-          \item Steuerung, Exfiltration, Key-Mgmt
-        \end{itemize}
-      \end{block}
-    \end{column}
-  \end{columns}
+\begin{frame}{Projektübersicht}
+  \centering
+  \includegraphics[width=0.95\textwidth,height=0.8\textheight,keepaspectratio]{images/01_gesamtarchitektur.png}
 \end{frame}
 
-\begin{frame}{Modulare Architektur (Agent)}
-  Der Rust-Agent bildet die Kill-Chain durch spezialisierte Module ab:
-  \vspace{0.3em}
-
-  \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
-      \begin{block}{1. Defense Evasion (\code{evasion.rs})}
-        \footnotesize
-        \begin{itemize}
-          \item Sandbox-Erkennung: RAM <3GB, CPU <2
-          \item Reaktion: Sofortiger Prozessabbruch
-        \end{itemize}
-      \end{block}
-      
-      \vspace{0.2em}
-      
-      \begin{block}{3. Impact Engine (\code{crypto.rs})}
-        \footnotesize
-        \begin{itemize}
-          \item Algorithmus: AES-256-CTR
-          \item Atomic Operations mit \code{.locked}
-        \end{itemize}
-      \end{block}
-    \end{column}
-
-    \begin{column}{0.48\textwidth}
-      \begin{block}{2. C2 Channel (\code{network.rs})}
-        \footnotesize
-        \begin{itemize}
-          \item Protokoll: TCP-Loop mit Retry
-          \item Commands: shell, exfil, encrypt
-        \end{itemize}
-      \end{block}
-      
-      \vspace{0.2em}
-      
-      \begin{block}{4. Extortion Logic (\code{extortion.rs})}
-        \footnotesize
-        \begin{itemize}
-          \item User Notification
-          \item Browser-Loop alle 5s
-        \end{itemize}
-      \end{block}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Delivery Infrastruktur}
-  \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
-      \begin{block}{Intelligente Verteilung}
-        \footnotesize
-        \begin{itemize}
-          \item Python-basierter Webserver
-          \item Erkennt OS via User-Agent
-          \item Liefert passendes Binary
-        \end{itemize}
-      \end{block}
-    \end{column}
-    \begin{column}{0.48\textwidth}
-      \begin{block}{Infektionsvektoren}
-        \footnotesize
-        \begin{itemize}
-          \item Phishing PDF: Verschwommene Rechnung
-          \item Drive-by-Download: Fake-Webseiten
-        \end{itemize}
-      \end{block}
-    \end{column}
-  \end{columns}
+\begin{frame}{Repository-Struktur}
+  \centering
+  \includegraphics[width=0.95\textwidth,height=0.82\textheight,keepaspectratio]{images/08_projektstruktur.png}
 \end{frame}
 
 % ============================================================
-% SEKTION 5: PHASEN EINES ANGRIFFS
+% SEKTION: PHASEN EINES ANGRIFFS
 % ============================================================
 \section{Die Phasen eines Angriffs}
+
+\begin{frame}{Attack Kill Chain -- Übersicht}
+  \centering
+  \includegraphics[width=0.98\textwidth,height=0.78\textheight,keepaspectratio]{images/02_attack_kill_chain.png}
+\end{frame}
 
 \begin{frame}{Phase 1: Distribution \& Infection}
   \textbf{Theorie:} Phishing (E-Mail Anhänge, Links), Drive-by-Downloads
@@ -621,6 +465,16 @@
       \item \textbf{Ergebnis:} Smart-Server liefert Malware aus
     \end{itemize}
   \end{demobox}
+\end{frame}
+
+\begin{frame}{Phase 1: Drive-by-Download Ablauf}
+  \centering
+  \includegraphics[width=0.95\textwidth,height=0.82\textheight,keepaspectratio]{images/04_drive_by_download.png}
+\end{frame}
+
+\begin{frame}{Phase 1: PDF Phishing Technik}
+  \centering
+  \includegraphics[width=0.95\textwidth,height=0.82\textheight,keepaspectratio]{images/05_pdf_phishing.png}
 \end{frame}
 
 \begin{frame}{Phase 2: Execution \& Evasion}
@@ -638,6 +492,11 @@
   \end{demobox}
 \end{frame}
 
+\begin{frame}{Phase 2: Agent Architektur}
+  \centering
+  \includegraphics[width=0.95\textwidth,height=0.82\textheight,keepaspectratio]{images/03_rust_agent.png}
+\end{frame}
+
 \begin{frame}{Phase 3: C2 \& Exfiltration}
   \textbf{Theorie:} Aufbau der Kommunikation, Nachladen von Befehlen, Datendiebstahl.
   
@@ -651,6 +510,11 @@
       \item \textbf{Double Extortion:} \code{exfil secret.pdf} stiehlt Daten
     \end{itemize}
   \end{demobox}
+\end{frame}
+
+\begin{frame}{Phase 3: C2 Kommunikation}
+  \centering
+  \includegraphics[width=0.95\textwidth,height=0.82\textheight,keepaspectratio]{images/07_c2_kommunikation.png}
 \end{frame}
 
 \begin{frame}{Phase 4: Encryption (Impact)}
@@ -668,6 +532,11 @@
   \end{demobox}
 \end{frame}
 
+\begin{frame}{Phase 4: Verschlüsselungsprozess}
+  \centering
+  \includegraphics[width=0.95\textwidth,height=0.82\textheight,keepaspectratio]{images/06_verschluesselung.png}
+\end{frame}
+
 \begin{frame}{Phase 5: Decryption (Recovery)}
   \textbf{Szenario:} Das Lösegeld wurde gezahlt (in der Simulation).
     
@@ -681,7 +550,7 @@
 \end{frame}
 
 % ============================================================
-% SEKTION 6: GEGENMAßNAHMEN
+% SEKTION 5: GEGENMAßNAHMEN
 % ============================================================
 \section{Gegenma{\ss}nahmen}
 
@@ -766,92 +635,40 @@
 \end{frame}
 
 % ============================================================
-% SEKTION 7: FORSCHUNG & AUSBLICK
-% ============================================================
-\section{Forschung \& Ausblick}
-
-\begin{frame}{Aktuelle Forschungslandschaft}
-  \begin{columns}[T]
-    \begin{column}{0.45\textwidth}
-      \textbf{Fokusgebiete:}
-      \begin{itemize}
-        \item \textbf{72,8\%} der Studien: Detektion
-        \item Machine Learning dominiert
-        \item Hohe Genauigkeit bei unbekannten Varianten
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.52\textwidth}
-      \begin{infobox}{REDFISH: Netzwerkbasierte Früherkennung}
-        \begin{itemize}
-          \item Monitoring von SMB-Protokoll
-          \item Erkennung von Verhaltensmustern
-          \item \alert{99\% Erkennung bei <10 Dateien}
-        \end{itemize}
-      \end{infobox}
-    \end{column}
-  \end{columns}
-  
-  \vspace{0.3em}
-  \small\textbf{Weitere Ansätze:} Near-Zero-Loss durch Traffic-Wiederherstellung, Moving Target Defense
-\end{frame}
-
-\begin{frame}{Zero-Loss Recovery: REDFISH}
-  \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
-      \textbf{Funktionsweise:}
-      \begin{itemize}
-        \item Analyse des Netzwerk-Traffics
-        \item Erkennung anomaler Zugriffsmuster
-        \item Aufzeichnung der Dateiinhalte
-        \item Automatische Alarmierung
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.48\textwidth}
-      \textbf{Vorteile:}
-      \begin{itemize}
-        \item Früherkennung (99\% bei <10 Dateien)
-        \item Wiederherstellung ohne Backups
-        \item Minimaler Datenverlust
-      \end{itemize}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% ============================================================
-% SEKTION 8: FAZIT
+% SEKTION 6: FAZIT
 % ============================================================
 \section{Fazit}
 
 \begin{frame}{Zusammenfassung}
-  \textbf{Takeaways aus der Simulation:}
+  \textbf{Erkenntnisse aus der Projektentwicklung:}
   \vspace{0.5em}
   
   \begin{columns}[T]
     \begin{column}{0.32\textwidth}
-      \begin{block}{Automatisierung}
+      \begin{block}{Komplexität}
         \footnotesize
-        Angriffe sind hochgradig automatisiert (Delivery Server).
+        Als Anfänger von Null funktionsfähige Malware entwickelt -- erschreckend niedrige Einstiegshürde.
       \end{block}
     \end{column}
     \begin{column}{0.32\textwidth}
-      \begin{block}{Social Engineering}
+      \begin{block}{KI-Unterstützung}
         \footnotesize
-        Oft effektiver als technische Exploits.
+        Entwicklung mit KI-Tools beschleunigt den Prozess erheblich.
       \end{block}
     \end{column}
     \begin{column}{0.32\textwidth}
-      \begin{block}{Double Extortion}
+      \begin{block}{AV-Evasion}
         \footnotesize
-        Nicht nur Verschlüsselung, auch Datendiebstahl.
+        \alert{Malware-Scanner schlägt nicht an} -- Agent bleibt unerkannt.
       \end{block}
     \end{column}
   \end{columns}
   
   \vspace{0.8em}
   
-  \begin{center}
-    \Large\textbf{Prävention und Awareness sind der beste Schutz.}
-  \end{center}
+  \begin{warnbox}{Fazit}
+    Unser Ziel war es herauszufinden, wie komplex die Implementierung funktionsfähiger Ransomware für Einsteiger ist. Das Ergebnis: \textbf{Mit modernen Tools und KI-Unterstützung ist die Hürde erschreckend niedrig.} Selbst gängige AV-Lösungen erkennen unseren Agent nicht.
+  \end{warnbox}
 \end{frame}
 
 \begin{frame}{Zukünftige Herausforderungen}

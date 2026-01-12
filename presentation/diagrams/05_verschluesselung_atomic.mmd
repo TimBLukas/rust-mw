@@ -1,0 +1,21 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ef4444', 'actorBkg': '#ef4444', 'actorTextColor': '#fff', 'actorBorder': '#b91c1c', 'signalColor': '#1e293b', 'noteBkgColor': '#fef3c7', 'noteTextColor': '#1e293b', 'fontSize': '16px'}, 'sequence': {'actorFontSize': 18, 'messageFontSize': 16, 'noteFontSize': 14}}}%%
+
+sequenceDiagram
+    participant C as crypto.rs
+    participant F as Filesystem
+    participant K as rescue.key
+
+    Note over C,K: KEY GENERATION
+    C->>C: 32 Byte Key
+    C->>K: Key speichern
+
+    Note over C,K: ENCRYPTION
+    C->>F: Dateien scannen
+    loop Jede Datei
+        C->>F: Lesen + AES-256 + Schreiben
+        C->>F: Umbenennen zu .locked
+    end
+
+    Note over C,K: DECRYPTION
+    C->>K: Key laden
+    C->>F: .locked entschlüsseln

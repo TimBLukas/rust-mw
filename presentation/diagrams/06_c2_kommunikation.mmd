@@ -1,0 +1,23 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#22c55e', 'actorBkg': '#22c55e', 'actorTextColor': '#fff', 'actorBorder': '#15803d', 'signalColor': '#1e293b', 'noteBkgColor': '#fef3c7', 'noteTextColor': '#1e293b', 'fontSize': '16px'}, 'sequence': {'actorFontSize': 18, 'messageFontSize': 16, 'noteFontSize': 14}}}%%
+
+sequenceDiagram
+    participant A as Agent
+    participant T as Pinggy Tunnel
+    participant C as C2 Server
+    participant O as Operator
+
+    Note over A,O: VERBINDUNG
+    A->>T: TCP Outbound
+    T->>C: Tunnel
+    C-->>O: Victim connected
+
+    Note over A,O: BEFEHLE
+    O->>C: shell whoami
+    C->>A: whoami
+    A-->>C: victim-user
+
+    O->>C: exfil secret.pdf
+    A-->>C: Base64 Data
+
+    O->>C: encrypt
+    A-->>C: Done
