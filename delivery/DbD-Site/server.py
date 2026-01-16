@@ -27,16 +27,13 @@ class DeliveryHandler(http.server.SimpleHTTPRequestHandler):
 
         # --- ROUTING FÜR DbD PAGES
         if path == "/game":
-            self.handle_smart_download()
-            # self.serve_file(os.path.join(PUBLIC_DIR, "game.html"))
+            self.serve_file(os.path.join(PUBLIC_DIR, "game.html"))
             return
         elif path == "/security":
-            self.handle_smart_download()
-            # self.serve_file(os.path.join(PUBLIC_DIR, "security.html"))
+            self.serve_file(os.path.join(PUBLIC_DIR, "security.html"))
             return
         elif path == "/prize":
-            self.handle_smart_download()
-            # self.serve_file(os.path.join(PUBLIC_DIR, "prize.html"))
+            self.serve_file(os.path.join(PUBLIC_DIR, "prize.html"))
             return
 
         # --- SMART DOWNLOAD (Vom PDF aufgerufen) ---
