@@ -9,34 +9,33 @@
 
 |  Nr.   | Folientitel / Thema                         | Sprecher | Status | Notizen / To-Do                                       |
 | :----: | :------------------------------------------ | :------: | :----: | :---------------------------------------------------- |
-| **1**  | **Titelfolie**                              |          |  [ ]   |                                                       |
-| **2**  | **Agenda**                                  |          |  [ ]   |                                                       |
-| **3**  | **Finanzielle Auswirkungen**                |          |  [ ]   | Fokus: Anstieg der Schadenssummen                     |
-| **4**  | **ENISA Threat Landscape 2024**             |          |  [ ]   | Ransomware als Top-EU-Bedrohung                       |
-| **5**  | **Motivation der Angreifer**                |          |  [ ]   | Geld, Sabotage, Geopolitik                            |
-| **6**  | **Die Ökonomie**                            |          |  [ ]   | RaaS Geschäftsmodell erklären                         |
-| **7**  | **Personalisierungsgrad: Beispiel LockBit** |          |  [ ]   |                                                       |
-| **8**  | **Ransomware Taxonomie**                    |          |  [ ]   | Baumdiagramm erklären                                 |
-| **9**  | **Grundlegende Typen**                      |          |  [ ]   | Crypto vs. Locker                                     |
-| **10** | **Case Study**                              |          |  [ ]   | **Übergang:** Vorstellung eigenes Projekt             |
-| **11** | **Projektübersicht**                        |          |  [ ]   | Ziel: Bildungssimulation                              |
-| **12** | **Systemarchitektur & Tech Stack**          |          |  [ ]   | Diagramm zeigen (Rust/Python/Bash)                    |
-| **13** | **Phasen eines Angriffs**                   |          |  [ ]   | Kill-Chain Überblick                                  |
-| **14** | **Phase 1: Distribution u. Infektion**      |          |  [ ]   | Theorie: Wie kommt Malware rein?                      |
-| **15** | **Phase 1 Drive-by-Download**               |          |  [ ]   | **🔴 LIVE:** Fake-Webseite zeigen (`/game`)           |
-| **16** | **Phase 1: Pdf-Phishing**                   |          |  [ ]   | **🔴 LIVE:** PDF öffnen, Link klicken, `.deb` Install |
-| **17** | **Phase 2: Execution u. Evasion**           |          |  [ ]   | Theorie: Ausführung & Verstecken                      |
-| **18** | **Phase 2: Agent Architektur**              |          |  [ ]   | Code-Blick: `evasion.rs` (RAM/CPU Check)              |
-| **19** | **Phase 3: C2 u. Exfiltration**             |          |  [ ]   | Theorie: Kommunikation zum Angreifer                  |
-| **20** | **C2-Kommunikation**                        |          |  [ ]   | **🔴 LIVE:** Python Shell zeigen, `exfil` ausführen   |
-| **21** | **Phase 4: Encryption (Impact)**            |          |  [ ]   | Theorie: AES-Verschlüsselung                          |
-| **22** | **Phase 4: Verschlüsselungsprozess**        |          |  [ ]   | **🔴 LIVE:** Wallpaper-Change & Panic-Browser         |
-| **23** | **Phase 5: Decryption**                     |          |  [ ]   | **🔴 LIVE:** `decrypt` Befehl, Restore zeigen         |
-| **24** | **Prävention u. Detektion**                 |          |  [ ]   | Backups, EDR                                          |
-| **25** | **Detektion u. Reaktion**                   |          |  [ ]   | Netzwerk-Analyse                                      |
-| **26** | **Incident Response**                       |          |  [ ]   | Isolation & Bereinigung                               |
-| **27** | **Zusammenfasssung**                        |          |  [ ]   | Key Takeaways                                         |
-| **28** | **Zukünftige Herausforderungen**            |          |  [ ]   | KI, Quantencomputing                                  |
+| **1**  | **Titelfolie**                              |    Shiao     |  [ ]   |                                                       |
+| **2**  | **Agenda**                                  |    Shiao     |  [ ]   |                                                       |
+| **3**  | **Finanzielle Auswirkungen**                |    Shiao      |  [ ]   | Fokus: Anstieg der Schadenssummen                     |
+| **4**  | **ENISA Threat Landscape 2024**             |    Shiao      |  [ ]   | Ransomware als Top-EU-Bedrohung                       |
+| **5**  | **Motivation der Angreifer**                |    Dome      |  [ ]   | Geld, Sabotage, Geopolitik                            |
+| **6**  | **Die Ökonomie**                            |    Dome      |  [ ]   | RaaS Geschäftsmodell erklären                         |
+| **7**  | **Personalisierungsgrad: Beispiel LockBit** |    Dome      |  [ ]   |                                                       |
+| **9**  | **Grundlegende Typen**                      |    Dome      |  [ ]   | Crypto vs. Locker                                     |
+| **10** | **Case Study**                              |    Nick      |  [ ]   | **Übergang:** Vorstellung eigenes Projekt             |
+| **11** | **Projektübersicht**                        |    Nick      |  [ ]   | Ziel: Bildungssimulation                              |
+| **12** | **Systemarchitektur & Tech Stack**          |    Nick      |  [ ]   | Diagramm zeigen (Rust/Python/Bash)                    |
+| **13** | **Phasen eines Angriffs**                   |    Nick      |  [ ]   | Kill-Chain Überblick                                  |
+| **14** | **Phase 1: Distribution u. Infektion**      |    Nick      |  [ ]   | Theorie: Wie kommt Malware rein?                      |
+| **15** | **Phase 1 Drive-by-Download**               |    Denis      |  [ ]   | **🔴 LIVE:** Fake-Webseite zeigen (`/game`)           |
+| **16** | **Phase 1: Pdf-Phishing**                   |    Denis      |  [ ]   | **🔴 LIVE:** PDF öffnen, Link klicken, `.deb` Install |
+| **17** | **Phase 2: Execution u. Evasion**           |    Denis      |  [ ]   | Theorie: Ausführung & Verstecken                      |
+| **18** | **Phase 2: Agent Architektur**              |    Tim      |  [ ]   | Code-Blick: `evasion.rs` (RAM/CPU Check)              |
+| **19** | **Phase 3: C2 u. Exfiltration**             |    Tim      |  [ ]   | Theorie: Kommunikation zum Angreifer                  |
+| **20** | **C2-Kommunikation**                        |    Tim      |  [ ]   | **🔴 LIVE:** Python Shell zeigen, `exfil` ausführen   |
+| **21** | **Phase 4: Encryption (Impact)**            |    Tim      |  [ ]   | Theorie: AES-Verschlüsselung                          |
+| **22** | **Phase 4: Verschlüsselungsprozess**        |    Denis      |  [ ]   | **🔴 LIVE:** Wallpaper-Change & Panic-Browser         |
+| **23** | **Phase 5: Decryption**                     |    Tim      |  [ ]   | **🔴 LIVE:** `decrypt` Befehl, Restore zeigen         |
+| **24** | **Prävention u. Detektion**                 |     Max     |  [ ]   | Backups, EDR                                          |
+| **25** | **Detektion u. Reaktion**                   |     Max     |  [ ]   | Netzwerk-Analyse                                      |
+| **26** | **Incident Response**                       |     Max     |  [ ]   | Isolation & Bereinigung                               |
+| **27** | **Zusammenfasssung**                        |     Max     |  [ ]   | Key Takeaways                                         |
+| **28** | **Zukünftige Herausforderungen**            |     Max     |  [ ]   | KI, Quantencomputing                                  |
 
 ---
 
@@ -44,7 +43,7 @@
 
 ### Vorbereitung für die Live-Demo (Checkliste)
 
-- [ ] Laptop 1 (Angreifer) und Laptop 2 (Opfer) im **Hotspot** verbunden?
+- [ ] Laptop 1 (Angreifer) und Laptop 2 (Opfer) 
 - [ ] IP-Adresse in `malware_agent/src/main.rs` aktualisiert?
 - [ ] `./scripts/start_demo.sh` (oder `start_all.sh`) ausgeführt?
 - [ ] Ist der `loot` Ordner auf dem C2-Server leer (für den Beweis)?
