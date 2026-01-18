@@ -360,46 +360,6 @@
 % ============================================================
 \section{Arten von Ransomware}
 
-\begin{frame}{Ransomware Taxonomy}
-  \tikzset{
-    mybox/.style={font=\scriptsize\sffamily\bfseries,draw=primaryblue!50, line width=0.6pt, inner sep=3pt, rounded corners=2pt, align=center},
-    greenbox/.style={mybox, fill=primaryblue!15, text=primarydark, text width=2cm, minimum height=0.8cm},
-    bluebox/.style={mybox, fill=accentcyan!15, text=primarydark, text width=2cm, font=\tiny\sffamily}
-  }
-
-  \centering
-  \resizebox{0.95\textwidth}{!}{%
-    \begin{forest}
-      for tree={edge={draw, primaryblue!50, line width=0.6pt}, s sep=0.2cm, l sep=0.4cm}
-      [, phantom, forked edges
-        [Types, greenbox, for children={folder, grow'=0} [Crypto, bluebox][Locker, bluebox][Scareware, bluebox]]
-        [Targets, greenbox, for children={folder, grow'=0} [Platforms, bluebox][Industries, bluebox]]
-        [Infection vectors, greenbox, for children={folder, grow'=0} [Windows RDP, bluebox][Phishing, bluebox][Software vuln., bluebox]]
-      ]
-    \end{forest}
-  }
-
-  \vspace{0.3cm}
-
-  \resizebox{0.95\textwidth}{!}{%
-    \begin{forest}
-      for tree={edge={draw, primaryblue!50, line width=0.6pt}, s sep=0.2cm, l sep=0.4cm}
-      [, phantom, forked edges
-        [Comm. with C\&C, greenbox, for children={folder, grow'=0} [Hard-coded IP, bluebox][DGA, bluebox]]
-        [Access to enc. key, greenbox, for children={folder, grow'=0} [Hard-coded, bluebox][Via C\&C, bluebox]]
-        [Malicious action, greenbox, for children={folder, grow'=0} [Encryption, bluebox][Locking, bluebox]]
-      ]
-    \end{forest}
-  }
-  
-  \vspace{0.2cm}
-  
-  \begin{exampleblock}{Projekt-Einblick: Edu-Ransomware}
-    \footnotesize
-    Unsere Ransomware ist eine klassische \textbf{Crypto-Ransomware} mit \textbf{Double Extortion}.
-  \end{exampleblock}
-\end{frame}
-
 \begin{frame}{Grundlegende Typen}
   \begin{columns}[T]
     \begin{column}{0.48\textwidth}
@@ -425,6 +385,11 @@
       \end{block}
     \end{column}
   \end{columns}
+  \vspace{0.3em}
+  \begin{exampleblock}{Projekt-Einblick: Edu-Ransomware}
+    \footnotesize
+    Unsere Ransomware ist eine klassische \textbf{Crypto-Ransomware} mit \textbf{Double Extortion}.
+  \end{exampleblock}
 \end{frame}
 
 % ============================================================
@@ -434,7 +399,7 @@
 
 \begin{frame}{Projektübersicht}
   \centering
-  \includegraphics[width=0.95\textwidth,height=0.8\textheight,keepaspectratio]{images/01_gesamtarchitektur.png}
+  \includegraphics[width=0.85\textwidth,height=0.8\textheight,keepaspectratio]{images/01_gesamtarchitektur.png}
 \end{frame}
 
 % ============================================================
@@ -498,8 +463,42 @@
 \section{Die Phasen eines Angriffs}
 
 \begin{frame}{Attack Kill Chain -- Übersicht}
-  \centering
-  \includegraphics[width=0.98\textwidth,height=0.78\textheight,keepaspectratio]{images/02_attack_kill_chain.png}
+  \textbf{Ablauf der Schadsoftware (Code-Logik):}
+  
+  \vspace{1em}
+  
+  \begin{enumerate}
+    \item \textbf{Entry Point} (\texttt{main.rs})
+    \begin{itemize}
+        \item Initialer Start des Programms auf dem Zielsystem.
+    \end{itemize}
+    
+    \item \textbf{Sandbox Check} (\texttt{evasion.rs})
+    \begin{itemize}
+        \item \textbf{Erfolg (OK):} Malware erkennt keine Analyse-Umgebung $\rightarrow$ Fortfahren.
+        \item \textbf{Fehlschlag (FAIL):} Malware beendet sich sofort (\textbf{Exit}), um Entdeckung zu vermeiden.
+    \end{itemize}
+
+    \item \textbf{Persistence} (\texttt{persistence.rs})
+    \begin{itemize}
+        \item Einrichten eines \textbf{Autostarts}, damit die Malware Neustarts überdauert.
+    \end{itemize}
+
+    \item \textbf{Command \& Control} (\texttt{network.rs})
+    \begin{itemize}
+        \item Aufbau des \textbf{C2 Loops} zur Kommunikation mit dem Angreifer-Server.
+    \end{itemize}
+
+    \item \textbf{Verschlüsselung} (\texttt{crypto.rs})
+    \begin{itemize}
+        \item Lokale Dateiverschlüsselung mittels \textbf{AES-256}.
+    \end{itemize}
+
+    \item \textbf{Erpressung} (\texttt{extortion.rs})
+    \begin{itemize}
+        \item Anzeige der \textbf{Ransom Note} (Erpresserschreiben) für das Opfer.
+    \end{itemize}
+  \end{enumerate}
 \end{frame}
 
 \begin{frame}{Phase 1: Distribution \& Infection}
