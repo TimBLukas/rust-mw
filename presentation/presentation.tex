@@ -502,17 +502,44 @@
 \end{frame}
 
 \begin{frame}{Phase 1: Distribution \& Infection}
-  \textbf{Theorie:} Phishing (E-Mail Anhänge, Links), Drive-by-Downloads
-  
+  \textbf{Theorie:}
+  Phishing (E-Mail-Anhänge, Links), Drive-by-Downloads
+
   \vspace{0.5em}
-  
-  \begin{demobox}{Live Demo: Initial Access Szenario}
-    \textbf{Szenario:} Mitarbeiter erhält E-Mail mit "Rechnung\_Dez.pdf"
-    \begin{itemize}
-      \item \textbf{Köder:} PDF enthält unscharfes Bild einer Rechnung
-      \item \textbf{Trick:} Button "Inhalt entschlüsseln" (Social Engineering)
-      \item \textbf{Ergebnis:} Smart-Server liefert Malware aus
-    \end{itemize}
+
+  \begin{demobox}{Live Demo: Initial-Access-Szenario}
+    \textbf{Szenario:}
+    Mitarbeiter erhält eine E-Mail mit dem Anhang
+    Rechnung\_Dez.pdf
+
+    \vspace{0.5em}
+
+    \begin{columns}
+      \begin{column}{0.49\textwidth}
+        \begin{block}{PDF}
+          \begin{itemize}
+            \item \textbf{Köder:}
+                  PDF enthält ein unscharfes Bild einer Rechnung
+            \item \textbf{Trick:}
+                  Button ``Inhalt entschlüsseln''
+                  (Social Engineering)
+            \item \textbf{Ergebnis:}
+                  Smishing-Server liefert Malware aus
+          \end{itemize}
+        \end{block}
+      \end{column}
+
+      \begin{column}{0.49\textwidth}
+        \begin{block}{Website}
+          \begin{itemize}
+            \item \textbf{Köder:}
+                  Unterschiedliche Websites fordern zum Download auf
+            \item \textbf{Ergebnis:}
+                  Server triggert den Download der Malware
+          \end{itemize}
+        \end{block}
+      \end{column}
+    \end{columns}
   \end{demobox}
 \end{frame}
 
@@ -544,7 +571,7 @@
 
 \begin{frame}{Phase 2: Agent Architektur}
   \centering
-  \includegraphics[width=0.95\textwidth,height=0.82\textheight,keepaspectratio]{images/03_rust_agent.png}
+  \includegraphics[width=0.95\textwidth,height=0.9\textheight,keepaspectratio]{images/02_agent_architecture.png}
 \end{frame}
 
 \begin{frame}{Phase 3: C2 \& Exfiltration}

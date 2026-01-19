@@ -1,15 +1,77 @@
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#3b82f6', 'actorBkg': '#3b82f6', 'actorTextColor': '#fff', 'actorBorder': '#1d4ed8', 'signalColor': '#1e293b', 'noteBkgColor': '#fef3c7', 'noteTextColor': '#1e293b', 'fontSize': '16px'}, 'sequence': {'actorFontSize': 18, 'messageFontSize': 16, 'noteFontSize': 14}}}%%
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#e2e8f0',
+    'primaryTextColor': '#0f172a',
+    'primaryBorderColor': '#475569',
+    'lineColor': '#334155',
+    'secondaryColor': '#f1f5f9',
+    'tertiaryColor': '#ffffff',
+    'noteBkgColor': '#fff1f2', 
+    'noteTextColor': '#881337',
+    'noteBorderColor': '#e11d48',
+    'actorBkg': '#f8fafc',
+    'actorBorder': '#0f172a',
+    'actorTextColor': '#0f172a',
+    'activationBkgColor': '#3b82f6',
+    'sequenceNumberColor': '#ffffff',
+    'fontSize': '16px',
+    'fontFamily': 'Consolas, "Courier New", monospace'
+  }
+}}%%
 
 sequenceDiagram
-    participant V as Browser
-    participant S as DbD Server
-    participant P as Payloads
+    autonumber
+    %% Akteure
+    participant M as Main.rs (Core)
+    participant E as Evasion Modul
+    participant N as Network Modul
+    participant FS as Crypto/FS (System)
+    actor C2 as C2 Server
 
-    V->>S: GET /game
-    S-->>V: Fake Website
-    V->>S: GET /get_document
-    Note over S: User-Agent Check
-    S->>P: OS-Payload laden
-    P-->>S: Binary
-    S-->>V: Download
-    V->>V: Ausführen
+    Note over M: Prozessstart
+
+    %% 1. Evasion Phase (Kühles Grau-Blau)
+    rect rgb(241, 245, 249)
+        Note right of M: Phase 1: Selbstschutz
+        M->>E: is_safe_environment()
+        activate E
+        Note right of E: Check: RAM < 3GB?<br/>Check: CPU < 2 Cores?
+        E-->>M: Result: OK (Safe)
+        deactivate E
+    end
+
+    %% 2. Connection Phase
+    M->>N: start_c2_loop()
+    activate N
+    N->>C2: TCP Connect (Handshake)
+    activate C2
+
+    %% 3. Loop Phase
+    loop Command Cycle
+        C2->>N: SEND CMD: "encrypt"
+        
+        N->>M: run_malware_logic()
+        activate M
+        
+        %% Impact & Encryption (Alarmierendes Rot, aber weich)
+        rect rgb(254, 242, 242)
+            Note right of M: Phase 2: Impact
+            M->>FS: set_wallpaper() (Extortion)
+            M->>FS: start_panic_browser()
+            
+            M->>FS: encrypt_file_atomic()
+            activate FS
+            Note right of FS: 1. Read Original<br/>2. AES-256-CTR<br/>3. Write .locked
+            FS-->>M: Result: Success
+            deactivate FS
+        end
+
+        M-->>N: Return "Encryption finished"
+        deactivate M
+        
+        N-->>C2: Send Response
+    end
+    
+    deactivate C2
+    deactivate N
