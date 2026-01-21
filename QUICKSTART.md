@@ -9,7 +9,18 @@
 
 ---
 
-## Option 1: Docker (Empfohlen)
+# Empfohlen: Automatisierter Start mit Bash Skript
+
+```bash
+./scripts/start_all.sh
+```
+
+Im Script start_all.sh werden automatisch alle Services gestartet und die neuen url's
+direkt in die Rust-Dateien an den richtigen Stellen eingefügt!
+
+Diese Variante ist am effektivsten und schnellsten.
+
+## Option 1: Docker
 
 ### Starten
 
