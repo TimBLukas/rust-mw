@@ -33,12 +33,14 @@
 \definecolor{lightgray}{RGB}{241,245,249}
 \definecolor{textgray}{RGB}{71,85,105}
 
-\definecolor{chartcolor1}{RGB}{239,68,68}
-\definecolor{chartcolor2}{RGB}{59,130,246}
-\definecolor{chartcolor3}{RGB}{34,197,94}
-\definecolor{chartcolor4}{RGB}{251,191,36}
-\definecolor{chartcolor5}{RGB}{168,85,247}
-\definecolor{chartcolor6}{RGB}{251,146,60}
+% Farbschema
+\definecolor{darkaccent}{RGB}{35,55,75}
+\definecolor{chartcolor1}{RGB}{231,76,60}
+\definecolor{chartcolor2}{RGB}{52,152,219}
+\definecolor{chartcolor3}{RGB}{46,204,113}
+\definecolor{chartcolor4}{RGB}{241,196,15}
+\definecolor{chartcolor5}{RGB}{155,89,182}
+\definecolor{chartcolor6}{RGB}{230,126,34}
 
 \definecolor{rustcolor}{RGB}{183,65,14}
 
@@ -589,9 +591,53 @@
   \end{demobox}
 \end{frame}
 
-\begin{frame}{Phase 3: C2 Kommunikation}
-  \centering
-  \includegraphics[width=0.95\textwidth,height=0.82\textheight,keepaspectratio]{images/07_c2_kommunikation.png}
+\begin{frame}{Phase 3: C2-Architektur (Reverse Shell)}
+    \begin{columns}[c] % Zentriert ausgerichtet
+
+        % Linke Spalte: Kompakter Text
+        \begin{column}{0.45\textwidth}
+            \begin{alertblock}{Das Prinzip}
+                Verbindung von \textbf{Innen nach Außen} umgeht Firewall-Regeln.
+            \end{alertblock}
+
+            \vspace{1em}
+            
+            \textbf{Befehlssatz:}
+            \begin{description}[font=\ttfamily\color{blue}]
+                \item[shell] Führt Systembefehle aus
+                \item[exfil] Stiehlt Dateien (Base64)
+                \item[encrypt] Startet Verschlüsselung
+                \item[decrypt] Startet Entschlüsselung 
+            \end{description}
+        \end{column}
+
+        % Rechte Spalte: Vertikales Diagramm (besser für Spalten)
+        \begin{column}{0.55\textwidth}
+            \centering
+            \resizebox{0.8\textwidth}{!}{
+            \begin{tikzpicture}[node distance=1.5cm, font=\sffamily]
+                % Komponenten untereinander statt nebeneinander
+                \node[rectangle, draw, fill=red!10, minimum width=3cm] (c2) {C2 Server (Internet)};
+                
+                \node[rectangle, draw=red, dashed, fill=white, minimum width=4cm, minimum height=0.5cm, below=1cm of c2] (fw) {Firewall};
+                
+                \node[rectangle, draw, fill=green!10, minimum width=3cm, below=1cm of fw] (agent) {Opfer (Intranet)};
+
+                % Pfeile
+                % Grün: Raus
+                \draw[->, ultra thick, green!60!black] (agent.east) to[out=0,in=0] node[right, font=\footnotesize]{1. Connect} (c2.east);
+                
+                % Rot: Rein (Blockiert)
+                \draw[->, ultra thick, red] (c2.west) to[out=180,in=180] node[left, font=\footnotesize]{Blocked} (fw.west);
+                
+                % Blau: Antwort durch Tunnel
+                \draw[->, thick, blue, dashed] (c2) -- node[fill=white, font=\tiny]{2. Response} (agent);
+
+            \end{tikzpicture}
+            }
+        \end{column}
+
+    \end{columns}
 \end{frame}
 
 \begin{frame}{Phase 4: Encryption (Impact)}

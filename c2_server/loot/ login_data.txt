@@ -1,0 +1,21 @@
+Allgemeine Informationen:
+> Name des Kontoinhabers: Max Mustermann
+> Geburtsdatum: 01.01.1990
+> Adresse: Musterstraße 12
+> 12345 Musterstadt
+> Land: Deutschland
+
+Bankverbindung:
+> Bankname: Musterbank AG
+> Filiale: Musterstadt
+> IBAN: DE12 3456 7890 1234 5678 90
+> BIC: MUSTDEFFXX
+> Kontonummer: 123456789
+> Bankleitzahl: 34567890
+
+Online-Banking-Zugang:
+> Benutzername: max.mustermann
+> PIN: 1234 4423
+> TAN-Verfahren: App-TAN
+> Gerät: Privater PC (Windows)
+
