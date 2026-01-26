@@ -44,9 +44,7 @@ rust-mw/
 │   │   ├── public/         # HTML/CSS Phishing-Seiten
 │   │   └── files/          # Payloads (werden durch build generiert)
 │   └── pdf_phishing/       # PDF Generator
-├── build_payloads.sh       # Kompiliert alle Payloads
-├── run_c2.sh               # Startet C2 Server
-├── run_delivery.sh         # Startet Delivery Server
+├── scripts/
 └── run_pinggy.sh           # Startet Pinggy Tunnel
 ```
 
