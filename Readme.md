@@ -13,6 +13,8 @@
 > - Using this software on systems without explicit authorization is **illegal** and may result in criminal prosecution.
 > - The author assumes **no liability** for damages caused by the use or misuse of this software.
 > - **NEVER** run this malware on production systems. Always use an isolated Virtual Machine (VM).
+>
+> - Safety Feature: Pinggy Links expires after 60 min, leaving the ransomware powerless. Note that it will still create persistance after execution and should therefor still never be started locally.
 
 ---
 
