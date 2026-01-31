@@ -3,6 +3,108 @@
 > **⚠ Wichtiger Hinweis:** Dieses Dokument dient ausschließlich Bildungszwecken im Rahmen einer genehmigten Simulation. Die Implementierung dieser Features verwandelt die Software in potenziell gefährliche Malware. Führen Sie Tests **ausschließlich** in isolierten Umgebungen (Sandboxes, VMs ohne Internetzugriff) durch.
 
 ---
+## Implementation strategy
+Strukturveränderungen:
+
+malware_agent/src/
+├── lib.rs
+├── main.rs
+├── background.rs          ← bleibt
+├── crypto/                 ← NEU: Untermodul
+│   ├── mod.rs             (re-exports)
+│   ├── aes.rs             (aktuelle crypto.rs)
+│   └── hybrid.rs          (Feature 5B: RSA + AES)
+├── evasion/                ← NEU: Untermodul
+│   ├── mod.rs
+│   ├── hardware.rs        (RAM/CPU checks)
+│   ├── behavior.rs        (Maus-Tracking, Sleep-Patching)
+│   └── process.rs         (Anti-Analysis Tools)
+├── network/                ← NEU: Untermodul
+│   ├── mod.rs
+│   ├── c2.rs              (C2-Loop, aktuelle network.rs)
+│   ├── discovery.rs       (Feature 3: Ping Sweep)
+│   ├── exfiltration.rs    (Feature 4: Priorisierte Exfil)
+│   └── dga.rs             (Feature 6: Domain Generation)
+├── persistence.rs          ← bleibt (schon gut strukturiert)
+├── extortion.rs           ← bleibt
+├── stealth/                ← NEU
+│   ├── mod.rs
+│   ├── antiforensics.rs   (Feature 8: Self-Delete, History Wipe)
+│   └── mutex.rs           (Feature 11: Singleton)
+├── recon/                  ← NEU (Feature 13)
+│   ├── mod.rs
+│   ├── ldap.rs
+│   └── smb.rs
+├── safety/                 ← NEU (Feature 12)
+│   ├── mod.rs
+│   ├── killswitch.rs
+│   └── geofencing.rs
+├── utils.rs               ← bleibt
+└── config.rs              ← NEU: Zentrale Konfiguration
+
+Zentrale Konfiguration in (`config.rs`)
+Problem: C2-IP/Port sind in `main.rs` hardcoded. Dies sollte in ein eigenes Config-Modul ausagelagert werden.
+
+(Struct Config)
+
+Einfach, geringer Aufwand
+1. Self Deletion
+2. Mutex/Singleton
+3. Geo-Fencing
+4. Kill-Switch
+5. Safe-Mode Watermark
+6. Improved HTML
+
+Dann weniger priorisiert, mittlerer Aufwand
+1. Scheduled Task (Cronde done, Schtasks fehlt)
+2. Exfil-Priorisierung
+3. Intnermittierende Verschlüsselung
+4. SQLite für C2
+5. MOTD Hijacking
+
+Fortgeschritten
+1. Network Discovery
+2. Screenshots
+3. Hybrid Encryption (RSA)
+4. DGA
+5. Fake Error Messages
+
+Kokmplex/Spezialisiert
+1. AD/LDAP Recon
+2. Steganographie / Polyglot
+3. Dead Drop Resolvers
+4. YARA Generator, IOC Extractor
+5. Dokumentation
+
+Empfehlung:
+Phase 1: Sicherheit & Basis
+├── 12A Kill-Switch
+├── 12B Geo-Fencing  
+├── 11  Mutex/Singleton
+└── config.rs einführen
+
+Phase 2: Evasion vervollständigen
+├── 1A  Sleep-Patching hinzufügen (evasion.rs)
+└── 8A  Self-Deletion (neues Modul)
+
+Phase 3: Crypto & Exfil erweitern
+├── 5A  Intermittierende Verschlüsselung
+├── 4A  Exfil-Priorisierung
+├── 16C Safe-Mode Watermark
+└── 4B  Screenshots (optional)
+
+Phase 4: C2 & Network
+├── 2A  Windows Scheduled Tasks (persistence.rs)
+├── 3A  Network Discovery
+├── 6A  DGA
+└── 9A  SQLite im Python-Server
+
+Phase 5: Polish & Dokumentation
+├── 10A Verbessertes Ransom-HTML
+├── 17A MOTD Hijacking
+├── 18  MITRE ATT&CK Mapping, Architektur-Diagramme
+└── 16A/B YARA Generator, IOC Extractor
+---
 
 ## 1. Erweiterte Evasion-Techniken 
 
