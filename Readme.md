@@ -49,7 +49,6 @@ rust-mw/
 ├── scripts/
 └── run_pinggy.sh           # Startet Pinggy Tunnel
 ```
-
 ---
 
 ## Features
@@ -87,7 +86,6 @@ graph LR
 ### Network Communication (Reverse Shell)
 
 The client actively connects outward to the server, bypassing typical firewall rules that block incoming traffic.
-
 ```mermaid
 graph LR
     subgraph Victim_Network [Victim Network]
