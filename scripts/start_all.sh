@@ -94,7 +94,11 @@ start_pinggy_c2() {
 
   while [ $elapsed -lt $timeout ]; do
     if [ -s "$PINGGY_TCP_LOG" ]; then
-      C2_URL=$(grep -a -oE 'tcp://[a-zA-Z0-9.-]+:[0-9]+' "$PINGGY_TCP_LOG" | head -1 || true)
+      # Unterstützt IPv4 und IPv6 Adressen:
+      # IPv4: tcp://zwrpo-88-68-118-240.a.free.pinggy.link:33007
+      # IPv6: tcp://ghhpv-2003-c3-7f14-8700-7285-c2ff-fed9-c71d.a.free.pinggy.link:33007
+      # Auch: tcp://xyz.pinggy.io:12345 (älteres Format)
+      C2_URL=$(grep -a -oP 'tcp://[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.pinggy\.(link|io):[0-9]+' "$PINGGY_TCP_LOG" | head -1 || true)
       if [ -n "$C2_URL" ]; then break; fi
     fi
     sleep 1
@@ -109,9 +113,14 @@ start_pinggy_c2() {
     exit 1
   fi
 
-  # Parsing
-  PINGGY_HOST=$(echo "$C2_URL" | sed 's|tcp://||' | cut -d':' -f1)
-  PINGGY_PORT=$(echo "$C2_URL" | sed 's|tcp://||' | cut -d':' -f2)
+  # Parsing: Extrahiere Host und Port aus der URL
+  # Format: tcp://hostname:port
+  # Der Port ist immer die letzte Zahl nach dem letzten Doppelpunkt
+  C2_URL_NO_PROTO="${C2_URL#tcp://}"
+  PINGGY_PORT="${C2_URL_NO_PROTO##*:}"
+  PINGGY_HOST="${C2_URL_NO_PROTO%:*}"
+  
+  print_status "Parsed: HOST=$PINGGY_HOST, PORT=$PINGGY_PORT"
   print_success "C2 Tunnel: $C2_URL"
 }
 

