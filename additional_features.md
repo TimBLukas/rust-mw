@@ -388,28 +388,63 @@ Nur IPs aus dem lokalen Labor-Netz zulassen.
     Eigene IP prüfen. Wenn sie nicht mit `192.168.` oder `10.` beginnt, sofort beenden. Das schützt davor, falls die Datei versehentlich ins Internet gelangt.
 
 
-## 13. Enterprise & Active Directory Reconnaissance 
+## 13. Enterprise & Active Directory Reconnaissance ✅ IMPLEMENTIERT
 
 ### Ziel:
 Simulieren, wie Ransomware in Firmennetzwerken Ziele priorisiert (Domain Controller, Backup-Server).
 
-### Implementierungsschritte:
+### Status: **FERTIGGESTELLT**
 
-#### A. LDAP Enumeration (Ohne Admin-Rechte)
+#### A. LDAP Enumeration (Ohne Admin-Rechte) ✅
 Jeder Domain-User kann das AD lesen.
 
 *   **Rust Crate:** `ldap3`.
-*   **Logik:**
-    1.  Verbindung zum Domain Controller (DC) via LDAP.
-    2.  Query nach Gruppen wie "Domain Admins", "Backup Operators".
-    3.  Liste der Computer im Netzwerk (`objectClass=computer`) holen.
-    4.  Ergebnis an C2 senden (`RECON_DATA:AD_STRUCTURE:...`).
+*   **Module:** `malware_agent/src/recon/ldap.rs`
+*   **Funktionen:**
+    *   Automatische DC-Erkennung (Windows: `LOGONSERVER`, Linux: `krb5.conf`, DNS SRV Records)
+    *   Domain Admins & Backup Operators Enumeration
+    *   Computer-Objekte auflisten (FQDN bevorzugt)
+    *   Domain Controller identifizieren (via `userAccountControl`)
+*   **MITRE ATT&CK:** T1069.002, T1087.002, T1018
 
-#### B. SMB Share Enumeration
+#### B. SMB Share Enumeration ✅
 Finden von Netzlaufwerken (das Hauptziel für Datenverschlüsselung in Firmen).
 
-*   **Code:** Iteration über UNC-Pfade (`\\Server\Share`).
-*   **Feature:** Automatisches Mounten gefundener Shares, um sie zu verschlüsseln.
+*   **Module:** `malware_agent/src/recon/smb.rs`
+*   **Funktionen:**
+    *   Plattformübergreifend: `net view` (Windows), `smbclient` (Linux)
+    *   Port 445 Connectivity Check
+    *   Lese-/Schreibzugriff-Tests
+    *   Automatisches Filtern von Verschlüsselungszielen (writable Disk-Shares)
+    *   Subnet-Scanning für SMB-Hosts (`/24`)
+*   **MITRE ATT&CK:** T1135, T1021.002
+
+#### C. High-Value Target Identification ✅
+Automatische Erkennung kritischer Systeme.
+
+*   **Patterns:** DC, BACKUP, SQL, DB, FILE, EXCHANGE, MAIL, ADMIN, NAS, VEEAM
+*   **Module:** `malware_agent/src/recon/mod.rs`
+
+#### D. C2 Integration ✅
+On-Demand Reconnaissance via C2-Befehl.
+
+*   **Befehl:** `recon`
+*   **Output-Format:** `RECON_DATA:AD_STRUCTURE:DOMAIN=...;ADMINS=...;COMPUTERS=...;SHARES=...;HVT=...`
+*   **Verwendung:**
+    ```bash
+    # Im C2-Terminal:
+    > recon
+    
+    # Response:
+    RECON_DATA:AD_STRUCTURE:DOMAIN=corp.local;ADMINS=admin1,admin2;COMPUTERS=DC01,WS01;SHARES=\\DC01\Data;HVT=DC01
+    
+    Summary:
+    - Domain: Some("corp.local")
+    - Domain Admins: 2
+    - Computers: 15
+    - SMB Shares: 8
+    - High-Value Targets: 3
+    ```
 
 ---
 

