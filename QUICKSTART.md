@@ -20,71 +20,8 @@ direkt in die Rust-Dateien an den richtigen Stellen eingefügt!
 
 Diese Variante ist am effektivsten und schnellsten.
 
-## Option 1: Docker
 
-### Starten
-
-```bash
-# Alle Services starten
-docker compose up -d
-
-# C2-Server interaktiv starten (für Bot-Kontrolle)
-docker attach c2-server
-```
-
-### Prüfen
-
-```bash
-# Status aller Container
-docker compose ps
-
-# Pinggy URLs aus Logs lesen
-docker logs pinggy-c2 2>&1 | grep -E "tcp://|URL"
-docker logs pinggy-delivery 2>&1 | grep -E "http://|URL"
-```
-
-### Payload bauen (mit dynamischer C2-Adresse)
-
-```bash
-# C2_HOST und C2_PORT von pinggy-c2 Logs übernehmen
-C2_HOST=<host-von-pinggy> C2_PORT=<port> docker compose --profile build run builder
-```
-
-### Stoppen
-
-```bash
-docker compose down
-```
-
----
-
-## Option 2: Lokal (Automatisiert)
-
-### Starten
-
-```bash
-./scripts/start_all.sh
-```
-
-> Dieses Skript:
-> 1. Startet Pinggy Tunnel
-> 2. Aktualisiert C2-Adresse in `main.rs`
-> 3. Startet C2-Server
-> 4. Kompiliert Payloads
-> 5. Startet Delivery-Server
-
-### Stoppen
-
-```bash
-# Ctrl+C im Terminal
-# Oder manuell:
-pkill -f "python3 server.py"
-pkill -f "ssh.*pinggy"
-```
-
----
-
-## Option 3: Manuell (Schritt für Schritt)
+## Alternativ: Manuell (Schritt für Schritt)
 
 ### 1. Pinggy Tunnel starten
 
