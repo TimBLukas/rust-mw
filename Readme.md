@@ -380,7 +380,6 @@ SOFTWARE.
 **ETHICAL USE CLAUSE:** By using this software, you agree to use it only for educational purposes or on systems you own or have explicit permission to test. The author is not responsible for any misuse.
 
 ---
-
 ## Support
 
 For questions or issues:
