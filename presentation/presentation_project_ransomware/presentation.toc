@@ -1,0 +1,17 @@
+\babel@toc {english}{}\relax 
+\beamer@sectionintoc {1}{Project Overview}{4}{0}{1}
+\beamer@sectionintoc {2}{System Architecture}{7}{0}{2}
+\beamer@sectionintoc {3}{Attack Kill Chain}{11}{0}{3}
+\beamer@sectionintoc {4}{Delivery Mechanisms}{13}{0}{4}
+\beamer@sectionintoc {5}{Evasion Module}{16}{0}{5}
+\beamer@sectionintoc {6}{Network Communication}{18}{0}{6}
+\beamer@sectionintoc {7}{Encryption Engine}{21}{0}{7}
+\beamer@sectionintoc {8}{Persistence Mechanisms}{24}{0}{8}
+\beamer@sectionintoc {9}{Data Exfiltration}{26}{0}{9}
+\beamer@sectionintoc {10}{Extortion Features}{28}{0}{10}
+\beamer@sectionintoc {11}{Network Reconnaissance}{30}{0}{11}
+\beamer@sectionintoc {12}{Safety and Stealth Features}{32}{0}{12}
+\beamer@sectionintoc {13}{Stealth Execution}{35}{0}{13}
+\beamer@sectionintoc {14}{Testing Strategy}{37}{0}{14}
+\beamer@sectionintoc {15}{MITRE ATT\&CK Mapping}{39}{0}{15}
+\beamer@sectionintoc {16}{Conclusion}{41}{0}{16}

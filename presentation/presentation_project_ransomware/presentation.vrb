@@ -1,0 +1,53 @@
+\frametitle{Configuration System}
+\textbf{Module: \code{config.rs} -- Centralized compile-time configuration:}
+
+  \vspace{0.5em}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \begin{codebox}{Config Structure}
+        \begin{lstlisting}[style=ruststyle]
+pub struct Config {
+    pub ip_adress: &'static str,
+    pub port: u16,
+    pub enable_evasion: bool,
+    pub enable_killswitch: bool,
+    pub safe_mode: bool,
+}
+
+impl Config {
+    pub const fn default() -> Self {
+        Config {
+            ip_adress: CONFIG_IP_ADDR,
+            port: CONFIG_PORT,
+            enable_evasion: false,
+            enable_killswitch: true,
+            safe_mode: false,
+        }
+    }
+}
+        \end{lstlisting}
+      \end{codebox}
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \textbf{Configuration Fields:}
+
+      \vspace{0.5em}
+      \footnotesize
+      \begin{tabular}{ll}
+        \toprule
+        \textbf{Field} & \textbf{Purpose} \\
+        \midrule
+        \code{ip\_adress} & C2 server hostname \\
+        \code{port} & C2 server port \\
+        \code{enable\_evasion} & Toggle sandbox checks \\
+        \code{enable\_killswitch} & Toggle kill switch \\
+        \code{safe\_mode} & Educational watermark \\
+        \bottomrule
+      \end{tabular}
+
+      \vspace{0.5em}
+      \begin{infobox}{Compile-Time Config}
+        Uses \code{const fn} so the configuration is embedded at compile time. The Pinggy tunnel address must be updated before each build.
+      \end{infobox}
+    \end{column}
+  \end{columns}
