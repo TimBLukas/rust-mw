@@ -8,7 +8,7 @@
 
 > **IMPORTANT LEGAL NOTICE & DISCLAIMER**
 >
-> This software was developed **exclusively for educational purposes** and security research.
+> This software was developed **for educational purposes** and security research.
 >
 > - Using this software on systems without explicit authorization is **illegal** and may result in criminal prosecution.
 > - The author assumes **no liability** for damages caused by the use or misuse of this software.
@@ -189,6 +189,7 @@ Port: 39005
 > **Hinweis:** Lassen Sie dieses Terminal offen, sonst bricht die Verbindung ab.
 
 ---
+
 
 ### Delivery Server (Drive-by-Download)
 
