@@ -1,0 +1,185 @@
+\documentclass[12pt,a4paper]{article}
+
+% ============================================================
+% PACKAGES
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,fit,backgrounds,calc,decorations.pathreplacing}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{hyperref}
+
+% ============================================================
+% COLOR SCHEME
+% ============================================================
+\definecolor{primarydark}{RGB}{15,23,42}
+\definecolor{primaryblue}{RGB}{30,64,175}
+\definecolor{accentcyan}{RGB}{6,182,212}
+\definecolor{accentorange}{RGB}{251,146,60}
+\definecolor{accentred}{RGB}{239,68,68}
+\definecolor{accentgreen}{RGB}{34,197,94}
+\definecolor{accentpurple}{RGB}{168,85,247}
+\definecolor{lightgray}{RGB}{241,245,249}
+\definecolor{textgray}{RGB}{71,85,105}
+
+\definecolor{chartcolor1}{RGB}{231,76,60}
+\definecolor{chartcolor2}{RGB}{52,152,219}
+\definecolor{chartcolor3}{RGB}{46,204,113}
+\definecolor{chartcolor4}{RGB}{241,196,15}
+\definecolor{chartcolor5}{RGB}{155,89,182}
+\definecolor{chartcolor6}{RGB}{230,126,34}
+
+% ============================================================
+% CUSTOM BOXES
+% ============================================================
+\newtcolorbox{infobox}[1]{
+  enhanced,
+  colback=accentcyan!5,
+  colframe=accentcyan,
+  coltext=primarydark,
+  title={\textbf{#1}},
+  coltitle=white,
+  colbacktitle=accentcyan,
+  fonttitle=\sffamily\bfseries\small,
+  fontupper=\sffamily\small,
+  arc=3pt,
+  boxrule=1pt,
+  left=8pt, right=8pt, top=4pt, bottom=6pt,
+  before skip=10pt,
+  after skip=10pt
+}
+
+\newtcolorbox{warnbox}[1]{
+  enhanced,
+  colback=accentorange!8,
+  colframe=accentorange,
+  coltext=primarydark,
+  title={\textbf{#1}},
+  coltitle=accentorange!80!black,
+  colbacktitle=accentorange!25,
+  fonttitle=\sffamily\bfseries\small,
+  fontupper=\sffamily\small,
+  arc=3pt,
+  boxrule=1pt,
+  left=8pt, right=8pt, top=4pt, bottom=6pt,
+  before skip=10pt,
+  after skip=10pt
+}
+
+\newtcolorbox{dangerbox}[1]{
+  enhanced,
+  colback=accentred!5,
+  colframe=accentred,
+  coltext=primarydark,
+  title={\textbf{#1}},
+  coltitle=white,
+  colbacktitle=accentred,
+  fonttitle=\sffamily\bfseries\small,
+  fontupper=\sffamily\small,
+  arc=3pt,
+  boxrule=1pt,
+  left=8pt, right=8pt, top=4pt, bottom=6pt,
+  before skip=10pt,
+  after skip=10pt
+}
+
+\newcommand{\code}[1]{\texttt{\textcolor{primaryblue}{#1}}}
+
+\title{\textbf{Ransomware}\\ \Large A Comprehensive Overview of the Threat Landscape}
+\author{IT Security -- Educational Presentation}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{What is Ransomware?}
+Ransomware is a type of malicious software designed to restrict access to a computer system or its data, typically through strong encryption, and demands a ransom payment for its restoration. The core characteristics of ransomware include denying access to files or systems, demanding payment (usually in cryptocurrency like Bitcoin or Monero to maintain anonymity), utilizing robust encryption algorithms, and often imposing a deadline or timer to create a sense of urgency. Typical targets for these attacks are organizations that cannot afford downtime, such as hospitals and healthcare providers, government agencies, educational institutions, critical infrastructure, and small to medium-sized businesses.
+
+The high-level operation of a ransomware attack follows a specific sequence. It begins with delivery, often through phishing emails or exploiting vulnerabilities. Once delivered, the payload executes on the victim's machine. The malware then establishes persistence to survive system reboots. Following this, it typically connects to a Command and Control (C2) server to phone home and receive instructions or encryption keys. The core action is the encryption phase, where the victim's files are locked. In modern attacks, this is often preceded by exfiltration, where data is stolen to be used for further extortion. Finally, a ransom note is displayed, demanding payment in exchange for the decryption key.
+
+\section{History and Evolution}
+The origins of ransomware date back to 1989 with the AIDS Trojan, created by Dr. Joseph Popp. This early iteration was distributed via 20,000 floppy disks at a World Health Organization conference, labeled as an "AIDS Information" diskette. After 90 reboots, it encrypted file names on the C: drive and demanded a \$189 payment sent to a PO Box in Panama. Although it used simple, easily reversible symmetric cryptography, the fundamental concept of denying access and demanding payment was established.
+
+The evolution of ransomware has seen a shift from hobbyist experiments to organized cybercrime and even state-sponsored operations. In 2006, Gpcode introduced RSA encryption, marking the first significant crypto-ransomware. By 2013, CryptoLocker popularized the use of Bitcoin for payments and employed robust 2048-bit RSA encryption. The year 2017 was a watershed moment with the global WannaCry worm, which exploited the EternalBlue vulnerability. In 2019, the Maze group pioneered double extortion, threatening to leak stolen data. From 2021 onwards, the Ransomware-as-a-Service (RaaS) era has dominated, with groups like LockBit and BlackCat targeting supply chains.
+
+Landmark attacks have shaped the current landscape. WannaCry, in May 2017, exploited an NSA-leaked SMB vulnerability to infect over 230,000 computers globally, causing billions in damages before being accidentally stopped by a kill switch. NotPetya, in June 2017, disguised itself as ransomware but was actually a destructive wiper, causing over \$10 billion in damages globally. The 2021 attack on the Colonial Pipeline by the DarkSide group highlighted the threat to critical infrastructure, leading to significant fuel shortages and prompting a major policy response from the US government.
+
+\section{Types of Ransomware}
+Ransomware can be broadly classified into several types. Crypto-Ransomware is the most prevalent, encrypting user files while leaving the underlying system functional. It uses strong encryption, making recovery without the key practically impossible. Locker-Ransomware, on the other hand, locks the entire system, often impersonating law enforcement, but does not encrypt the files themselves. Today, crypto-ransomware dominates over 95\% of incidents, rendering locker variants largely obsolete.
+
+Modern variants include Wipers, which are disguised as ransomware but permanently destroy data, often used in state-sponsored attacks. Leakware or Doxware threatens to publish stolen data, applying pressure even if the victim has backups. The Ransomware-as-a-Service (RaaS) model allows developers to lease their malware to affiliates, significantly lowering the barrier to entry for cybercriminals. Intermittent Encryption is a newer tactic where only parts of a file are encrypted, making the process much faster and harder for security tools to detect.
+
+\section{Extortion Models}
+The extortion models employed by ransomware groups have evolved significantly. Initially, attacks relied on Single Extortion, where files were encrypted, and a ransom was demanded. Around 2019, Double Extortion emerged, pioneered by the Maze group. In this model, attackers first exfiltrate sensitive data before encrypting the network. If the victim refuses to pay for decryption, the attackers threaten to publish the stolen data on a leak site. This is devastating because backups do not protect against data leaks, and the resulting regulatory fines and reputational damage can be severe.
+
+The evolution continued with Triple Extortion, which adds Distributed Denial of Service (DDoS) attacks or targets the victim's customers directly to increase pressure. Quadruple Extortion goes even further by contacting business partners, regulators, and the media. The key trend is that even organizations with perfect backups can be successfully extorted, as data theft and reputational damage create immense pressure independent of the encryption itself.
+
+\section{The Ransomware Economy}
+Ransomware has transformed into a professional shadow economy, largely driven by the Ransomware-as-a-Service (RaaS) model. This ecosystem involves distinct roles. Initial Access Brokers specialize in compromising networks and selling that access. RaaS Operators develop and maintain the malware platform, C2 infrastructure, and negotiation portals, typically taking a 20-30\% cut of the ransom. Affiliates are the operators who buy access, deploy the ransomware, and handle negotiations, keeping the remaining 70-80\%.
+
+The financial impact is staggering on a global scale. Estimated global damages have skyrocketed from \$5 billion in 2017 to an estimated \$42 billion in 2024, representing a massive increase. The average ransom payment has reached millions of dollars, and the average downtime for a victim organization is nearly a month.
+
+The professionalization of this industry is exemplified by groups like LockBit. They operated with business-like features, including an affiliate portal, a bug bounty program for their own malware, custom exfiltration tools, and automated negotiation systems. They even offered rewards for finding vulnerabilities in their infrastructure. However, international law enforcement operations, such as Operation Cronos, have actively targeted and dismantled such groups.
+
+According to the ENISA Threat Landscape Report 2024, ransomware is the second largest cyber threat in Europe, trailing only behind DDoS attacks, highlighting its pervasive nature and significant impact.
+
+\section{Attack Lifecycle (Cyber Kill Chain)}
+The ransomware attack lifecycle follows the Cyber Kill Chain model. It begins with Reconnaissance, where attackers gather intelligence and identify vulnerabilities. This is followed by Weaponization, where the payload is developed. The Delivery phase involves transmitting the malware to the target, often via phishing or drive-by downloads. Exploitation occurs when a vulnerability is triggered or a user executes the payload. Installation involves establishing persistence and escalating privileges. The malware then establishes Command and Control (C2) communication. Finally, the Actions on Objectives phase involves encrypting files, exfiltrating data, and deploying the ransom note.
+
+Initial Access is typically gained through phishing, which remains the most common method. This includes spear-phishing with malicious attachments, embedded macros, or links to credential harvesting sites. Exploiting vulnerabilities in internet-facing systems, such as VPN gateways or Exchange servers, is another major vector. Drive-by downloads from compromised websites and supply chain attacks, where software updates or managed service providers are compromised, are also utilized.
+
+During the Execution and Evasion phase, attackers use techniques like PowerShell scripts, DLL side-loading, and "living-off-the-land" binaries (LOLBins). To evade detection, the malware may employ obfuscation, packing, and techniques to bypass Anti-Malware Scan Interface (AMSI) or Endpoint Detection and Response (EDR) solutions. Sandbox detection mechanisms are also common, checking system resources or user interaction to ensure the malware is not running in an analysis environment.
+
+Persistence is achieved through various mechanisms, such as Registry Run keys or Scheduled Tasks on Windows, and Systemd services or Cron jobs on Linux. Lateral Movement involves moving through the network to compromise additional systems, often using credential harvesting tools like Mimikatz, Pass-the-Hash techniques, or exploiting Active Directory vulnerabilities.
+
+The Encryption phase utilizes strong cryptographic approaches, often a hybrid scheme combining symmetric encryption (like AES-256) for speed and asymmetric encryption (like RSA) to protect the symmetric key. Before encryption begins, the malware typically deletes Volume Shadow Copies and disables recovery mechanisms to prevent easy restoration of the files.
+
+\section{Detection and Defense}
+Defending against ransomware requires a multi-layered approach. Detection methods include Static Analysis, which relies on signatures and YARA rules, though this is easily bypassed by polymorphic malware. Dynamic or Behavioral Analysis involves executing the file in a sandbox and monitoring its behavior, API calls, and network traffic. Machine Learning is increasingly used to detect anomalies in file I/O patterns and network traffic, as well as analyzing file entropy.
+
+Key indicators of a ransomware attack include rapid file renaming, mass read and write operations, commands to delete shadow copies, unusual encryption API usage, and beaconing to unknown IP addresses.
+
+Prevention relies on a Defense-in-Depth strategy. Technical controls must include robust backups following the 3-2-1 rule (3 copies, 2 media, 1 offsite), automated patching, EDR/XDR solutions, network segmentation, and widespread use of Multi-Factor Authentication (MFA). Organizational controls are equally important, encompassing security awareness training, incident response planning, and least privilege access. Continuous monitoring and a rapid response capability, often provided by a 24/7 Security Operations Center (SOC), are essential for containing attacks early.
+
+In the event of an incident, immediate actions include isolating affected systems, preserving forensic evidence, and engaging an incident response team. It is crucial not to shut down systems immediately, as this can destroy valuable memory forensics. Recovery involves restoring from verified clean backups, checking for available decryptors, and rebuilding compromised systems while resetting all credentials. The general recommendation from law enforcement and security professionals is not to pay the ransom, as it funds future attacks, offers no guarantee of data recovery, and may violate international sanctions.
+
+\section{Legal and Ethical Dimensions}
+The legal framework surrounding ransomware is complex. For attackers, laws like the US Computer Fraud and Abuse Act (CFAA) and equivalent legislation in the EU and Germany carry severe penalties. International cooperation is facilitated by agreements like the Budapest Convention. For victims, regulations such as the GDPR mandate strict breach notification timelines and impose significant fines for non-compliance.
+
+Ethical research into ransomware is vital for developing defenses but must be conducted responsibly. This means operating exclusively in isolated lab environments, obtaining proper authorization, and adhering to responsible disclosure practices.
+
+\section{Future Trends and Challenges}
+The future of ransomware is likely to be shaped by emerging technologies. AI-powered ransomware could automate target selection, generate highly convincing phishing campaigns, and adapt its evasion techniques in real-time. New attack surfaces are expanding to include IoT devices, cloud infrastructure, and Operational Technology (OT) environments.
+
+The advent of quantum computing poses a significant post-quantum threat, potentially breaking current encryption standards. This has led to concerns about "harvest now, decrypt later" strategies. Furthermore, the geopolitical dimension of ransomware is growing, with state-sponsored groups using it as a cover for espionage or cyber warfare, complicating international relations and response efforts.
+
+\section{Conclusion}
+Ransomware has evolved into a highly professional, multi-billion dollar criminal industry. There is no silver bullet to stop it; attackers continuously adapt, and the barrier to entry has been significantly lowered by the RaaS model. Effective defense requires a comprehensive, layered security approach that combines technical controls, human awareness, and well-tested incident response plans. The critical realization for any organization is that a ransomware attack is a matter of "when," not "if," and preparation is the key to mitigating its impact.
+
+\begin{thebibliography}{99}
+  \bibitem{enisa} ENISA (2024): \textit{Threat Landscape Report 2024}. European Union Agency for Cybersecurity.
+  \bibitem{age} Razulla, B. et al.: \textit{The Age of Ransomware: A Survey on the Evolution, Taxonomy, and Research Directions}.
+  \bibitem{sophos} Sophos (2024): \textit{The State of Ransomware 2024}. Annual survey report.
+  \bibitem{mandiant} Mandiant (2024): \textit{M-Trends 2024}. Special report on cyber threat trends.
+  \bibitem{cisa} CISA: \textit{\#StopRansomware Guide}. Joint publication with FBI and NSA.
+  \bibitem{mitre} MITRE ATT\&CK: \textit{Enterprise Matrix}. \url{https://attack.mitre.org}
+  \bibitem{nomoreransom} No More Ransom Project: \url{https://www.nomoreransom.org}
+  \bibitem{oz} Oz, H. et al.: \textit{A Survey on Ransomware: Evolution, Taxonomy, and Defense Solutions}.
+\end{thebibliography}
+
+\end{document}

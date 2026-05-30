@@ -1,0 +1,347 @@
+\documentclass[12pt,a4paper]{article}
+
+% ============================================================
+% PACKAGES
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[edges]{forest}
+\usetikzlibrary{shapes,arrows,positioning,fit,backgrounds,calc,decorations.pathreplacing}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable,listings}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{listings}
+\usepackage{hyperref}
+
+% ============================================================
+% COLOR SCHEME
+% ============================================================
+\definecolor{primarydark}{RGB}{15,23,42}
+\definecolor{primaryblue}{RGB}{30,64,175}
+\definecolor{accentcyan}{RGB}{6,182,212}
+\definecolor{accentorange}{RGB}{251,146,60}
+\definecolor{accentred}{RGB}{239,68,68}
+\definecolor{accentgreen}{RGB}{34,197,94}
+\definecolor{accentpurple}{RGB}{168,85,247}
+\definecolor{lightgray}{RGB}{241,245,249}
+\definecolor{textgray}{RGB}{71,85,105}
+\definecolor{rustcolor}{RGB}{183,65,14}
+\definecolor{pythoncolor}{RGB}{55,118,171}
+
+\definecolor{chartcolor1}{RGB}{231,76,60}
+\definecolor{chartcolor2}{RGB}{52,152,219}
+\definecolor{chartcolor3}{RGB}{46,204,113}
+\definecolor{chartcolor4}{RGB}{241,196,15}
+\definecolor{chartcolor5}{RGB}{155,89,182}
+\definecolor{chartcolor6}{RGB}{230,126,34}
+
+% ============================================================
+% LISTINGS CONFIGURATION
+% ============================================================
+\lstdefinestyle{ruststyle}{
+  language=C,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{primaryblue}\bfseries,
+  stringstyle=\color{accentgreen!80!black},
+  commentstyle=\color{textgray}\itshape,
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{lightgray},
+  morekeywords={fn,let,mut,pub,use,mod,struct,impl,const,match,Ok,Err,Some,None,Result,self,crate,if,else,loop,break,return,where,for,in,true,false,String,Vec,Path,PathBuf,u8,u16,u32,u64,bool},
+  literate={->}{{$\rightarrow$}}1 {=>}{{$\Rightarrow$}}1,
+}
+
+\lstdefinestyle{pythonstyle}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{pythoncolor}\bfseries,
+  stringstyle=\color{accentgreen!80!black},
+  commentstyle=\color{textgray}\itshape,
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{lightgray},
+}
+
+% ============================================================
+% CUSTOM BOXES
+% ============================================================
+\newtcolorbox{codebox}[1]{
+  enhanced,
+  colback=white,
+  colframe=primaryblue,
+  colbacktitle=primaryblue,
+  coltitle=white,
+  coltext=primarydark,
+  title={\textbf{#1}},
+  fonttitle=\sffamily\bfseries\small,
+  fontupper=\sffamily\small,
+  arc=3pt,
+  boxrule=1pt,
+  left=8pt, right=8pt, top=4pt, bottom=6pt,
+  before skip=10pt,
+  after skip=10pt
+}
+
+\newtcolorbox{infobox}[1]{
+  enhanced,
+  colback=accentcyan!5,
+  colframe=accentcyan,
+  coltext=primarydark,
+  title={\textbf{#1}},
+  coltitle=white,
+  colbacktitle=accentcyan,
+  fonttitle=\sffamily\bfseries\small,
+  fontupper=\sffamily\small,
+  arc=3pt,
+  boxrule=1pt,
+  left=8pt, right=8pt, top=4pt, bottom=6pt,
+  before skip=10pt,
+  after skip=10pt
+}
+
+\newtcolorbox{warnbox}[1]{
+  enhanced,
+  colback=accentorange!8,
+  colframe=accentorange,
+  coltext=primarydark,
+  title={\textbf{#1}},
+  coltitle=accentorange!80!black,
+  colbacktitle=accentorange!25,
+  fonttitle=\sffamily\bfseries\small,
+  fontupper=\sffamily\small,
+  arc=3pt,
+  boxrule=1pt,
+  left=8pt, right=8pt, top=4pt, bottom=6pt,
+  before skip=10pt,
+  after skip=10pt
+}
+
+\newtcolorbox{dangerbox}[1]{
+  enhanced,
+  colback=accentred!5,
+  colframe=accentred,
+  coltext=primarydark,
+  title={\textbf{#1}},
+  coltitle=white,
+  colbacktitle=accentred,
+  fonttitle=\sffamily\bfseries\small,
+  fontupper=\sffamily\small,
+  arc=3pt,
+  boxrule=1pt,
+  left=8pt, right=8pt, top=4pt, bottom=6pt,
+  before skip=10pt,
+  after skip=10pt
+}
+
+\newcommand{\code}[1]{\texttt{\textcolor{primaryblue}{#1}}}
+\newcommand{\rustbadge}{\textcolor{rustcolor}{\textbf{Rust}}}
+\newcommand{\pythonbadge}{\textcolor{pythoncolor}{\textbf{Python}}}
+
+\title{\textbf{Edu-Ransomware}\\ \Large Architecture, Features, and Implementation Details}
+\author{IT Security -- Educational Ransomware Simulation Project}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{dangerbox}{Important Notice: Legal Disclaimer}
+This software and the accompanying documentation were developed \textbf{exclusively for educational purposes} and security research. The primary goal is to understand the mechanics of modern ransomware to better defend against it.
+
+Using this software on systems without explicit authorization is \textbf{illegal} and unethical. \textbf{NEVER} run this malware on production systems or networks you do not own or have explicit permission to test. Always use an isolated Virtual Machine (VM) for analysis and execution. As a built-in safety mechanism, the Pinggy tunnel links utilized in this project expire after 60 minutes, ensuring that the command and control infrastructure cannot be abused long-term.
+
+\textbf{Repository:} \url{https://github.com/TimBLukas/rust-mw}\\
+\textbf{License:} MIT (with Ethical Use Clause)
+\end{dangerbox}
+
+\tableofcontents
+\newpage
+
+\section{Project Overview}
+
+Edu-Ransomware is a comprehensive, full-stack ransomware simulation designed specifically for educational environments. Its primary objective is to demonstrate the end-to-end lifecycle of modern ransomware attacks, providing students and security professionals with a tangible understanding of how these threats operate in the wild. The project investigates how accessible ransomware development has become, particularly with the aid of modern programming languages and AI assistance.
+
+The system is composed of several distinct components that work in tandem to execute the attack. The core is the \textbf{Malware Agent}, written in Rust, which executes on the victim's system. Rust was chosen for its ability to compile into native, statically linked binaries that require no runtime environment. Furthermore, Rust's cross-compilation capabilities allow the same codebase to target Windows, Linux, and macOS. The memory safety guarantees of Rust eliminate entire classes of vulnerabilities, and the resulting complex binaries are notoriously difficult for security analysts to reverse-engineer. This reflects a growing trend among real-world threat actors, such as the BlackCat/ALPHV group, who have increasingly adopted Rust for their payloads.
+
+The agent communicates with a \textbf{Command and Control (C2) Server} written in Python. This server utilizes a multithreaded TCP socket architecture to manage multiple victim sessions simultaneously. It features an interactive command-line interface with ANSI-colored output, allowing the operator to issue commands, manage sessions, and decode base64-encoded exfiltrated data streams.
+
+To distribute the malware, the project includes a \textbf{Delivery Server}, also written in Python. This HTTP server facilitates drive-by-download attacks by detecting the victim's operating system via the User-Agent string and serving the appropriate compiled payload. The initial vector for directing victims to this server is a \textbf{PDF Phishing} generator, which creates socially engineered documents designed to trick users into clicking malicious links.
+
+\section{System Architecture}
+
+The architecture of Edu-Ransomware is designed to mimic the sophisticated infrastructure used by professional cybercriminal organizations. The network is divided into the attacker's infrastructure and the victim's environment, bridged by secure tunneling.
+
+On the attacker's side, the Python C2 Server listens on port 4444, while the Delivery Server operates on port 3000. To bypass inbound firewall restrictions on the victim's network, the C2 server is exposed to the internet using Pinggy.io TCP tunnels. This provides NAT traversal and gives the attacker a public endpoint.
+
+The attack begins when the victim interacts with the Phishing PDF, which relies on social engineering to prompt a link click. This request is routed to the Delivery Server, which analyzes the request and serves the OS-specific Rust Agent payload. Once executed on the victim's machine, the agent initiates an outbound TCP connection to the Pinggy tunnel, which forwards the traffic to the C2 server. This reverse shell architecture is crucial because enterprise firewalls typically allow outbound traffic while blocking inbound connections. Once the connection is established, the C2 server can send commands to the agent, and the agent can exfiltrate data back to the attacker.
+
+The Rust agent itself is highly modular, organized into discrete components for maintainability and extensibility. The \code{main.rs} file serves as the entry point, quickly delegating to \code{lib.rs} for orchestration. The configuration is centralized in \code{config.rs}. The core functionalities are divided into specialized modules: \code{crypto} handles the AES-256-CTR encryption; \code{evasion} manages sandbox and analysis tool detection; \code{network} is responsible for C2 communication and data exfiltration; \code{recon} performs Active Directory and SMB enumeration; \code{persistence} ensures the malware survives reboots; \code{extortion} manages the ransom note and wallpaper modifications; \code{stealth} provides anti-forensics capabilities; and \code{safety} implements kill switches and geofencing to prevent accidental spread.
+
+\section{Attack Kill Chain}
+
+The execution sequence of the Rust agent follows a precise, calculated flow designed to maximize the chances of a successful infection while minimizing the risk of early detection.
+
+Upon execution, the agent's first action is to daemonize itself. On Linux, this is achieved by forking the process into the background, detaching it from the terminal. On Windows, the \code{windows\_subsystem} attribute ensures the process runs without a visible console window.
+
+Next, the agent engages its evasion module to perform sandbox detection. It runs a series of checks to determine if it is being analyzed in a virtual machine or by security researchers. If the environment appears safe, execution continues. However, if any analysis tools or sandbox indicators are detected, the agent immediately prints a deceptive error message and terminates, thwarting automated analysis.
+
+Once the environment is deemed safe, the agent establishes persistence. It configures the host operating system to automatically execute the malware upon reboot, ensuring the attacker maintains access even if the system is restarted.
+
+Following persistence, the agent enters its C2 loop. It connects to the configured C2 server address and awaits instructions. The agent will continuously poll for commands, executing them and returning the results. 
+
+When the operator issues the \code{encrypt} command, the agent's cryptographic module takes over, recursively traversing the filesystem and encrypting targeted files using AES-256-CTR. Finally, the \code{extort} command is used to deploy the ransom note and change the desktop wallpaper, making the victim aware of the compromise and providing instructions for payment.
+
+\section{Delivery Mechanisms}
+
+The project employs two primary delivery mechanisms: a smart drive-by-download server and socially engineered phishing PDFs.
+
+The Delivery Server (\code{delivery/DbD-Site/server.py}) is designed to serve the correct payload seamlessly. It hosts multiple phishing page templates, such as a fake gaming download page (\code{/game}), a fake security alert (\code{/security}), and a fake prize notification (\code{/prize}). When a victim accesses the \code{/get\_document} endpoint, the server analyzes the HTTP User-Agent header to identify whether the victim is using Windows, Linux, or macOS. It then automatically delivers the corresponding Rust binary. This ensures that the attack is effective regardless of the victim's operating system. The payloads are generated by a build pipeline script (\code{build\_payloads.sh}) that cross-compiles the Rust agent for all target platforms and places the binaries in the server's delivery directory.
+
+The initial hook is often a crafted PDF document generated by the \code{pdf\_phishing/generate\_phishing\_pdf.py} script. This document utilizes social engineering by presenting a blurred image of an invoice or important document. A prominent button labeled "Decrypt Content" or "View Secure Document" is overlaid on the image. When the victim, perhaps an employee expecting an invoice, clicks the button, their default web browser opens the URL of the Delivery Server. The server then detects their OS and initiates the download of the malware binary, completing the delivery phase.
+
+\section{Evasion Module}
+
+To survive in modern environments protected by Endpoint Detection and Response (EDR) solutions and automated sandboxes, the agent incorporates a multi-layered evasion module. These checks run sequentially, starting with the fastest and least intrusive.
+
+The first layer involves hardware checks (\code{hardware.rs}). The agent queries system information using the \code{sysinfo} crate to determine if the hardware profile matches a typical user workstation or a constrained analysis virtual machine. It checks if the system has less than 3 GB of RAM, fewer than 3 CPU cores, or less than 60 GB of disk space. If any of these conditions are met, the agent assumes it is in a sandbox.
+
+The second layer is a process scan (\code{process.rs}). The agent enumerates running processes and cross-references them against a hardcoded list of known analysis tools, such as Wireshark, Process Monitor, x64dbg, OllyDbg, Fiddler, and IDA Pro. The presence of any of these tools triggers an immediate exit.
+
+The final layer is a behavioral check (\code{behavior.rs}). This is the slowest check and is run last. The agent records the current mouse cursor position, sleeps for 5 seconds, and then records the position again. If the mouse has not moved, it strongly indicates an automated sandbox environment without human interaction. This check also helps detect sandboxes that accelerate the system clock to bypass sleep delays.
+
+If any of these evasion checks fail, the agent prints a fake error message, such as "Error: Runtime failed to initialize required components (0xC0000005)", and exits with code 1. This deceptive behavior is designed to make analysts believe the binary is simply broken or incompatible, rather than malicious.
+
+\section{Network Communication}
+
+The communication between the infected host and the attacker relies on a robust reverse shell architecture. In a reverse shell, the victim's machine initiates the connection outward to the attacker's server. This is highly effective because corporate firewalls are typically configured to block unsolicited inbound traffic but allow outbound connections to the internet. 
+
+The agent reads the C2 server's address and port from its compiled-in configuration (\code{config.rs}). It attempts to establish a TCP connection using \code{TcpStream::connect()}. Once connected, it enters a command loop where it receives instructions, executes them, and sends the output back to the C2 server. If the connection fails, the agent employs retry logic, attempting to connect 5 times with a 5-second delay between attempts. If all attempts fail, the agent exits silently to avoid raising suspicion.
+
+The C2 server processes a variety of commands. The \code{shell <cmd>} command allows the operator to execute arbitrary operating system commands on the victim's machine. The \code{encrypt [path]} and \code{decrypt [path]} commands trigger the cryptographic routines. Data exfiltration is handled by \code{exfil <file>}, which reads a file, encodes it in Base64, and transmits it, or \code{auto-exfil}, which automatically searches for and steals high-value files in the background. The \code{exfil-screenshot} command captures the victim's screen. The \code{recon} command initiates network discovery, and the \code{kill} command triggers the agent's self-destruct sequence. If the agent receives an unrecognized command, it defaults to passing it to the underlying OS shell (\code{sh -c} on Linux, \code{cmd /C} on Windows) and returning the output.
+
+\section{Encryption Engine}
+
+The core destructive capability of the ransomware is its encryption engine, implemented in \code{crypto/aes.rs}. The project utilizes the Advanced Encryption Standard (AES) with a 256-bit key operating in Counter (CTR) mode. AES-256-CTR is a stream cipher, meaning it encrypts data in chunks (in this case, 4 KB blocks) rather than requiring the entire file to be loaded into memory at once. This allows the malware to efficiently encrypt very large files.
+
+For educational simplicity, the 32-byte symmetric key is randomly generated at runtime and saved locally to a file named \code{rescue.key} in the target directory. The Initialization Vector (IV) is currently static. In a real-world scenario, this symmetric key would be encrypted (wrapped) using an asymmetric public key embedded in the malware, ensuring that only the attacker, who holds the corresponding private key, could recover the symmetric key.
+
+A critical design feature of the encryption process is its atomic nature. When encrypting a file, the agent first opens the original file for reading. It then creates a temporary file with an \code{.enc\_temp} extension. The data is read, encrypted in 4 KB chunks, and written to the temporary file. Once the entire file is encrypted, the agent performs an atomic rename operation, changing the temporary file's extension to \code{.locked}. Finally, the original file is deleted. This atomic process ensures crash safety; if the system loses power or the process is terminated mid-encryption, the victim is left with either the fully intact original file or the fully encrypted file, but never a corrupted, partially encrypted state.
+
+The orchestration of this process is handled by \code{lib.rs}. The agent validates the target directory, drops the HTML ransom note, generates the key, and then recursively walks the filesystem using the \code{walkdir} crate. It systematically encrypts every file it encounters, explicitly skipping critical files like the ransom note, the key file, and already locked files.
+
+\section{Persistence Mechanisms}
+
+To ensure the malware continues to operate even if the victim reboots their computer, the agent implements cross-platform persistence mechanisms in \code{persistence.rs}. The code uses Rust's conditional compilation (\code{\#[cfg(...)]}) to execute the appropriate logic for the host operating system.
+
+On Linux, the agent attempts two methods for redundancy. Method A involves creating a Systemd User Service. It writes a \code{.service} file to \code{\text{\textasciitilde}/.config/systemd/user/}, configures it as a \code{forking} service, and enables it via \code{systemctl --user}. This method is preferred as it does not require root privileges. Method B acts as a fallback, adding an \code{@reboot} entry to the user's crontab. The agent reads the existing crontab, checks for duplicates, and appends the new entry.
+
+On Windows, the primary method is creating a Scheduled Task using \code{schtasks.exe}. The task is configured to trigger \code{onlogon}, requests the highest available privileges, and uses the \code{CREATE\_NO\_WINDOW} flag to remain hidden. As a secondary method, the agent writes a value to the Current User Registry Run key (\code{HKCU\textbackslash Software\textbackslash Microsoft\textbackslash Windows\textbackslash CurrentVersion\textbackslash Run}), ensuring the executable is launched when the user logs in.
+
+For macOS, the agent utilizes LaunchAgents. It creates a property list (\code{.plist}) file in \code{\text{\textasciitilde}/Library/LaunchAgents/} with the \code{RunAtLoad} key set to true. Like the Linux Systemd method, this achieves persistence without requiring administrative rights.
+
+\section{Data Exfiltration}
+
+Modern ransomware attacks rarely rely solely on encryption; they also steal sensitive data to enable double extortion. The \code{network/exfiltration.rs} module provides these capabilities.
+
+The operator can manually exfiltrate specific files using the \code{exfil <filepath>} command. The agent reads the requested file, encodes its contents in Base64 to ensure safe transmission over the text-based C2 channel, and sends it with a specific prefix format (\code{EXFIL\_DATA:<filename>:<base64>}). The Python C2 server detects this prefix, decodes the payload, and saves the file to a local \code{loot/} directory.
+
+To maximize impact quickly, the agent features an automated high-value exfiltration routine triggered by the \code{auto-exfil} command. This process runs in a non-blocking background thread. It recursively searches the filesystem for files containing sensitive keywords in their names, such as "password", "secret", "iban", or "credit", as well as specific extensions like \code{.kdbx} (KeePass databases), \code{.pem}, and \code{.key}. When a high-value file is found, the agent opens a separate TCP connection to transfer the data, preventing the main C2 channel from being blocked by large transfers.
+
+Additionally, the \code{exfil-screenshot} command utilizes the \code{screenshots} crate to capture the victim's current desktop. The image is encoded as a PNG, converted to Base64, and transmitted to the C2 server, providing the attacker with immediate visual context of the compromised system.
+
+\section{Extortion Features}
+
+The psychological impact of a ransomware attack is a critical component of the extortion process. The \code{extortion.rs} module is responsible for maximizing this pressure through visual cues.
+
+The primary method of communication is the ransom note, \code{README\_DECRYPT.html}. This is a fully styled HTML document featuring a dark theme and a red/black color scheme designed to convey urgency and danger. It prominently displays a "YOUR FILES ARE ENCRYPTED" heading, provides instructions on how to contact the attacker, and includes a deceptive "Decrypt Files Now" button. Once the encryption process is complete, the agent automatically opens this HTML file in the user's default web browser using OS-specific commands (\code{xdg-open} on Linux, \code{cmd /C start} on Windows, \code{open} on macOS).
+
+To ensure the victim cannot ignore the compromise, the agent also changes the desktop wallpaper. The project embeds a threatening image (\code{ransom\_wallpaper.jpg}) directly into the binary at compile time using the \code{include\_bytes!} macro. At runtime, this image is extracted to the filesystem, and the \code{wallpaper} crate is used to set it as the desktop background, typically using a crop mode to fill the entire screen. The combination of inaccessible files, a browser popup, and a hijacked desktop creates immediate panic, pressuring the victim into compliance.
+
+\section{Network Reconnaissance}
+
+Once a foothold is established, attackers often seek to move laterally and escalate privileges. The \code{recon/} module automates the discovery of enterprise network environments.
+
+The \code{ldap.rs} component performs Active Directory enumeration. It automatically detects the Domain Controller by inspecting environment variables like \code{LOGONSERVER} on Windows or parsing \code{krb5.conf} and DNS SRV records on Linux. Using the \code{ldap3} crate, it queries the directory without requiring administrative rights. It extracts lists of Domain Admins, Backup Operators, and all registered computer objects, providing the attacker with a map of the network's privilege structure.
+
+The \code{smb.rs} component focuses on identifying writable network shares, which are prime targets for mass encryption. It uses cross-platform tools (\code{net view} on Windows, \code{smbclient} on Linux) to enumerate shares. It tests port 445 connectivity and verifies read/write access. It can also perform subnet scanning to discover other SMB hosts on the local network.
+
+A higher-level module (\code{mod.rs}) analyzes the discovered hostnames to identify high-value targets automatically. It looks for patterns indicating Domain Controllers, Backup servers, SQL databases, File servers, Exchange servers, and administrative workstations, allowing the attacker to prioritize their lateral movement efforts.
+
+\section{Safety and Stealth Features}
+
+Given the educational nature of the project, robust safety mechanisms are implemented to prevent accidental damage or uncontrolled spread.
+
+The Kill Switch (\code{safety/killswitch.rs}) is a critical safeguard. Before executing its malicious payload, the agent performs an HTTP GET request to a predefined remote URL. If the server responds with the string "STOP", the agent immediately aborts execution and initiates its self-deletion routine. If the response is "RUN" or a 404 error, execution continues. This allows the project maintainer to remotely deactivate the malware globally.
+
+Geo-Fencing (\code{safety/geofencing.rs}) ensures the malware only operates within controlled lab environments. It inspects the host's local IP address and restricts execution to private network ranges (e.g., \code{192.168.x.x}, \code{10.x.x.x}). If the agent finds itself on a public IP address, it terminates, preventing it from becoming a "zoo virus" that escapes into the wild.
+
+To maintain stealth and prevent operational errors, the agent uses a Singleton pattern (\code{stealth/mutex.rs}). It acquires a named system lock upon startup. If the lock is already held, it indicates another instance of the agent is running, and the new instance exits silently. This prevents multiple agents from attempting to encrypt the same files simultaneously, which could lead to data corruption.
+
+Finally, the Anti-Forensics module (\code{stealth/antiforensics.rs}) allows the operator to remove traces of the infection. When the \code{kill} command is received, the agent deletes its own executable, removes all persistence registry keys or cron jobs, and attempts to wipe the user's shell history, often by symlinking \code{.bash\_history} to \code{/dev/null}.
+
+\section{Stealth Execution}
+
+To operate effectively, the malware must remain hidden from the user during its execution phase. The \code{background.rs} module handles the daemonization and window-hiding techniques.
+
+On Linux systems, the agent utilizes the standard \code{fork()} system call to create a child process. The parent process immediately exits, returning control to the terminal, while the child process continues running in the background, detached from the user's session. This leaves no visible window or obvious process name in the foreground.
+
+On Windows, the project leverages the Rust compiler attribute \code{\#![windows\_subsystem = "windows"]}. This directive instructs the Windows operating system to treat the executable as a Graphical User Interface (GUI) application rather than a console application. Because the code does not actually create any GUI windows, the process runs entirely invisibly in the background. It does not appear in the taskbar and can only be discovered by inspecting the Task Manager. This attribute is conditionally applied only in release builds, allowing developers to see console output during debugging.
+
+\section{Testing Strategy}
+
+To ensure reliability and correctness, the project maintains a comprehensive test suite. Every module includes unit tests enclosed in \code{\#[cfg(test)]} blocks, which are executed during the build process.
+
+The Cryptography tests verify the integrity of the AES-256-CTR implementation. They ensure keys are generated with the correct 32-byte length and properly saved to disk. Full encrypt and decrypt cycles are simulated within isolated temporary directories to guarantee that data is perfectly restored and that the atomic rename process functions correctly.
+
+Network tests validate the command parsing logic. They ensure that commands like \code{encrypt}, \code{decrypt}, and \code{exfil} are correctly identified and that arguments are properly extracted. They also test the fallback mechanism, ensuring that unrecognized commands are successfully passed to the OS shell and the output is captured.
+
+Extortion tests verify that the HTML ransom note is generated with the correct content and formatting, and that file creation handles permission errors gracefully. Persistence tests ensure that Systemd service files, cron entries, and macOS plists are formatted correctly according to the OS specifications. The use of conditional compilation (\code{\#[cfg]}) ensures that OS-specific tests only run on their respective platforms.
+
+\section{MITRE ATT\&CK Mapping}
+
+The techniques employed by Edu-Ransomware map directly to the MITRE ATT\&CK framework, providing a standardized way to describe its behavior.
+
+Initial Access is achieved via Drive-by Compromise (T1189) and Spearphishing Links (T1566.002). Execution relies on Command and Scripting Interpreters (T1059). Persistence is maintained through Boot/Logon Autostart Execution (T1547.001) and Scheduled Tasks (T1053.005).
+
+Defense Evasion techniques include Virtualization/Sandbox Evasion (T1497) and Indicator Removal on Host (T1070). The agent performs Discovery via System Information Discovery (T1082), Domain Account Discovery (T1087.002), and Network Share Discovery (T1135).
+
+Data Collection involves Screen Capture (T1113), followed by Exfiltration Over C2 Channel (T1041). Finally, the primary Impact is achieved through Data Encrypted for Impact (T1486) and Internal Defacement (T1491.001).
+
+\section{Conclusion}
+
+The development of Edu-Ransomware yields several critical findings. Most notably, it demonstrates the alarmingly low barrier to entry for creating sophisticated malware. Starting with minimal Rust experience, a fully functional, cross-platform ransomware agent was developed by leveraging modern tooling, extensive libraries, and AI assistance.
+
+Furthermore, the compiled Rust binary proved highly effective at evading detection. During testing, common antivirus solutions failed to flag the agent, highlighting the limitations of signature-based detection against custom-compiled, memory-safe languages that produce complex binaries.
+
+This project underscores that static analysis and traditional antivirus are insufficient defenses. Organizations must adopt defense-in-depth strategies, incorporating behavioral detection, robust network monitoring, and, most importantly, secure, offline backup solutions to mitigate the threat of modern ransomware.
+
+\section{Future Work}
+
+While the current iteration of Edu-Ransomware is highly capable, several enhancements are planned for future development to further simulate advanced persistent threats.
+
+On the offensive side, implementing Hybrid Encryption (using RSA to wrap the AES keys) would prevent local key recovery, mirroring real-world ransomware. Intermittent Encryption could be added to significantly speed up the encryption process by only encrypting portions of files. A Domain Generation Algorithm (DGA) would provide a resilient fallback mechanism if the primary C2 server is taken down.
+
+For defensive training, the project aims to develop Blue Team features. This includes an automated YARA Rule Generator to create detection signatures based on the compiled binaries, and an IOC Extractor to automatically generate reports of Indicators of Compromise. Additionally, a "Safe-Mode Watermark" could be embedded in encrypted files to clearly identify them as part of an educational simulation, preventing panic if the malware were to accidentally execute outside a lab environment.
+
+\begin{thebibliography}{99}
+  \bibitem{hamann} IT Security Lecture, Prof.\ Dr.\ Matthias Hamann, WS24/25.
+  \bibitem{age} Razulla, B. et al.: \textit{The Age of Ransomware: A Survey on the Evolution, Taxonomy, and Research Directions}.
+  \bibitem{enisa} ENISA (2024): \textit{Threat Landscape Report 2024}.
+  \bibitem{project} \textit{Edu-Ransomware Repository} (GitHub, 2026): \url{https://github.com/TimBLukas/rust-mw}
+  \bibitem{morato} Morato, D. et al.: \textit{Ransomware early detection by the analysis of file sharing traffic}.
+  \bibitem{mitre} MITRE ATT\&CK Framework: \url{https://attack.mitre.org}
+\end{thebibliography}
+
+\end{document}
