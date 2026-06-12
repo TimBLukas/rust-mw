@@ -78,7 +78,9 @@ select <id>       # Bot auswählen
 exec whoami       # Befehl ausführen
 ```
 
+
 ---
+
 
 ## Troubleshooting
 
@@ -97,3 +99,5 @@ exec whoami       # Befehl ausführen
 - **Exfiltrierte Daten**: `loot/`
 - **C2-Server**: `c2_server/server.py`
 - **Rust Agent**: `malware_agent/src/`
+
+
